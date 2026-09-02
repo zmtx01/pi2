@@ -964,7 +964,8 @@
                         fetch('/api/save-score', {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ estrelas: 2, conquista_aranha: conquistaAranha }) // Estrela do Dia 1 = 2 (Aprendiz=1, Estagiário=2)
+                            body: JSON.stringify({ estrelas: 2, conquista_aranha: conquistaAranha, username_jogo: localStorage.getItem('nomeEstagiario') }) // Estrela do Dia 1 = 2 (Aprendiz=1, Estagiário=2)
+                        
                         }).catch(function() {});
                     }
 

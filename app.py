@@ -30,6 +30,7 @@ if not DB_PASSWORD:
 
 # --- Funções Auxiliares de Segurança e Banco de Dados ---
 
+
 def get_db_connection():
     try:
         # Habilita sslmode='require' para garantir conexão estável e segura com o Supabase
@@ -68,6 +69,14 @@ def validate_admin_token():
     if not payload or not payload.get('is_admin', False):
         return None
     return payload
+
+# ROTA DE MANUTENÇÃO (Keep-Alive): Mantém o Render acordado de forma automática
+@app.route('/api/keep-alive', methods=['GET'])
+def keep_alive():
+    return jsonify({
+        "status": "healthy", 
+        "message": "Servidor do Diario de um Estagiario ativo!"
+    }), 200
 
 # --- Rotas para Servir Páginas HTML (Frontend) ---
 
@@ -374,9 +383,11 @@ def save_score():
     data = request.get_json() or {}
     estrelas = data.get('estrelas', 0)
     conquista_aranha = data.get('conquista_aranha', False)
+    username_jogo = data.get('username_jogo') # Pega o nome digitado no jogo (ex: 'aaa')
     
     user_id = payload['user_id']
-    username = payload['username']
+    # Se o jogo não enviar um nome personalizado, usamos o usuário da conta como fallback
+    username = username_jogo if username_jogo else payload['username']
     
     conn = get_db_connection()
     if not conn:
@@ -384,12 +395,13 @@ def save_score():
         
     try:
         cur = conn.cursor()
-        # Executa o UPSERT: insere ou atualiza mantendo sempre o maior score do jogador
+        # Atualiza o registro. Se o usuário já existir, atualiza o nome do jogo, estrelas e conquista
         cur.execute("""
             INSERT INTO semae_ranking (user_id, username, estrelas, conquista_aranha)
             VALUES (%s, %s, %s, %s)
             ON CONFLICT (user_id) 
             DO UPDATE SET 
+                username = EXCLUDED.username,
                 estrelas = GREATEST(semae_ranking.estrelas, EXCLUDED.estrelas),
                 conquista_aranha = semae_ranking.conquista_aranha OR EXCLUDED.conquista_aranha,
                 updated_at = CURRENT_TIMESTAMP

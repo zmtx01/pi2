@@ -396,6 +396,14 @@
     </div>
 
     <script>
+
+        if (window.location.protocol !== 'file:') {
+            if (!sessionStorage.getItem('aba_ativa')) {
+                window.location.href = '/logout';
+            }
+        }
+
+        
        function voltarEscritorio() {
             // Comando nativo que volta para a página anterior de forma suave
             window.history.back();
