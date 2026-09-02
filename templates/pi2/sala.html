@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Diário de um Estagiário - Escritório</title>
+    <style>
+        /* Mantendo o padrão de cores e tipografia do projeto */
+        body {
+            background-color: #000000;
+            margin: 0;
+            padding: 20px;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center; /* Centraliza todo o bloco verticalmente */
+            box-sizing: border-box;
+            font-family: 'Consolas', 'SF Mono', 'DejaVu Sans Mono', monospace;
+            color: #5FDCF2;
+        }
+
+        /* Título DIA 1: Configuração original */
+        .dia-titulo {
+            font-size: 3.5rem;
+            font-weight: bold;
+            color: #5FDCF2; 
+            margin-top: 80px;   
+            margin-bottom: 30px; 
+            text-align: center;
+            position: relative; 
+            top: -130px;
+        }
+
+        /* Container relativo para alinhar a Hitbox precisamente sobre a imagem: Configuração original */
+        .sala-container {
+            position: relative;
+            display: inline-block; 
+            max-width: 100%;
+            top: -130px; 
+        }
+
+        .imagem-centralizada {
+            display: block;
+            max-width: 50vw;
+            max-height: 50vh;
+            object-fit: contain;
+            border: 2px solid #5FDCF2;
+            border-radius: 4px;
+        }
+
+        /* Configuração da Hitbox (Área clicável) original */
+        #hitbox-mesa {
+            position: absolute;
+            cursor: pointer;
+            transition: background-color 0.2s;
+
+            top: 51%;     
+            left: 36%;    
+            width: 28%;   
+            height: 45%;  
+        }
+        
+        /* Instrução de texto: Configuração original */
+        .instrucao-texto {
+            font-size: 1.2rem;
+            text-align: center;
+            margin-top: 10px; 
+            margin-bottom: 0;
+            line-height: 1.6;
+            position: relative;
+            top: -130px;
+        }
+
+        .highlight {
+            color: #FF9F1C;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Topo: Título Grande -->
+    <div class="dia-titulo">DIA 1</div>
+
+    <!-- Centro: Imagem com Hitbox interativa -->
+    <div class="sala-container">
+        <img id="imagem-sala" alt="Sala do Escritório" class="imagem-centralizada" />
+        
+        <!-- Área clicável (Hitbox) -->
+        <div id="hitbox-mesa" onclick="clicarMesa()"></div>
+    </div>
+
+    <!-- Base: Boas-vindas e instrução dinâmica -->
+    <div class="instrucao-texto" id="instrucao-texto">
+        Bem-vindo, <span class="highlight" id="nome-estagiario">ESTAGIÁRIO</span>! Pode escolher sua mesa.
+    </div>
+
+    <script>
+        // 1. DETECTOR HÍBRIDO AVANÇADO DE CAMINHO DE IMAGENS
+        const imgSala = document.getElementById('imagem-sala');
+        if (imgSala) {
+            let baseCaminho = '';
+            if (window.location.protocol === 'file:') {
+                // Se você abriu localmente de dentro da pasta templates/pi2/
+                if (window.location.pathname.includes('/templates/pi2/')) {
+                    baseCaminho = '../../static/pi2/';
+                } else {
+                    // Se abriu de uma pasta de testes comum na área de trabalho
+                    baseCaminho = '';
+                }
+            } else {
+                // Se estiver rodando no servidor (Render ou localhost)
+                baseCaminho = '/static/pi2/';
+            }
+            imgSala.src = baseCaminho + 'sala.png';
+        }
+
+        // 2. Recupera o nome salvo na tela inicial e atualiza o texto de boas-vindas
+        const nomeSalvo = localStorage.getItem('nomeEstagiario') || 'Estagiário';
+        document.getElementById('nome-estagiario').innerText = nomeSalvo.toUpperCase();
+
+        // 3. Redireciona de forma híbrida e instantânea para a mesa
+        function clicarMesa() {
+            if (window.location.protocol === 'file:') {
+                window.location.href = "mesa.html"; // Localmente abre o mesa.html (tudo minúsculo)
+            } else {
+                window.location.href = "/pi2/mesa"; // No servidor abre a rota segura /pi2/mesa
+            }
+        }
+    </script>
+
+</body>
+</html>
