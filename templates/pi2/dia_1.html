@@ -553,6 +553,7 @@
             }
         }
         
+        let progressoDoUsuario = 0;
         // 2. LEITURA ÚNICA DE CARREGAMENTO (Configura mídias e status do chamado no terminal)
         async function inicializarTerminal() {
             const imgMesa = document.getElementById('imagem-mesa');
@@ -580,19 +581,27 @@
                     const response = await fetch('/api/my-progress');
                     if (response.ok) {
                         const data = await response.json();
+                        
+                        // Sincroniza o progresso na variável global
+                        progressoDoUsuario = data.progresso;
 
-                        // Define o visual da mesa de acordo com o banco
+                        // 2A. Define o visual da mesa de acordo com o banco
                         if (data.conquista_aranha === true && imgMesa) {
                             imgMesa.src = baseCaminho + 'mesa2.png';
                             localStorage.setItem((data.username_jogo || 'Estagiário').toUpperCase() + '_conquistaAranha', 'true');
                         }
 
-                        // Recupera a fase em progresso ou persiste o status de concluído
+                        // 2B. Persiste o status de chamado em andamento ou concluído
                         if (data.progresso === 2) {
-                            // Estado 2 (Em progresso): Recupera a fase ativa se houver
+                            // Estado 2 (Em progresso): Altera o botão principal para continuar
+                            const btn = document.getElementById('btn-iniciar-jogo');
+                            if (btn) {
+                                btn.textContent = "[ CONTINUAR ATENDIMENTO ]";
+                            }
+
+                            // Verifica se há alguma fase salva localmente para este usuário
                             const chaveFase = (data.username_jogo || 'Estagiário').toUpperCase() + '_fase_ativa';
                             const faseSalva = localStorage.getItem(chaveFase);
-                            
                             if (faseSalva !== null) {
                                 const indexFase = parseInt(faseSalva, 10);
                                 if (indexFase > 0 && indexFase < roteiro.length) {
@@ -641,6 +650,12 @@
 
         /* CONTROLES DE JANELA */
         function clicarTela() {
+            // Se o chamado já está ativo e em progresso, o clique na tela já o joga direto para a continuação
+            if (progressoDoUsuario === 2 && !jogoAtivo) {
+                iniciarTerminalDia1();
+                return;
+            }
+
             fecharArquivos(); fecharChamados();
             const telaBackdrop = document.getElementById('tela-backdrop');
             const manualWrapper = document.getElementById('manual-wrapper');
@@ -899,14 +914,66 @@
             // LIBERAÇÃO IMEDIATA DA PÁGINA "PRINT" (Index 1) NO INÍCIO DO JOGO
             paginasLiberadas = Math.max(paginasLiberadas, 2);
 
-            // CORREÇÃO: O jogo fica ativo, mas mantemos o valor de faseAtual que foi recuperado no onload!
             jogoAtivo = true; 
             errosFase = 0; 
             digitando = true;
             terminalInput.disabled = true; 
             document.getElementById('area-input').style.opacity = '.3';
             
-            // CORREÇÃO: Imprime o prompt da fase atual recuperada (em vez de forçar a fase 0)
+            // =================================================================
+            // RECONSTRUÇÃO DO HISTÓRICO DE DESAFIOS ANTERIORES (MÁGICA CONCEITUAL)
+            // =================================================================
+            
+            // 1. Cria a cabeçalha padrão do Windows
+            const headerDiv = document.createElement('div');
+            headerDiv.innerHTML = `Microsoft Windows [versão 10.0.19045]
+(c) Microsoft Corporation. Todos os direitos reservados.
+
+=======================================================
+               TERMINAL OPERACIONAL SEMAE
+=======================================================`;
+            historico.appendChild(headerDiv);
+
+            // 2. Se houver progresso, imprime os desafios anteriores já solucionados de forma perfeita
+            if (faseAtual > 0) {
+                for (let i = 0; i < faseAtual; i++) {
+                    const f = roteiro[i];
+                    
+                    // Imprime o enunciado/prompt da fase anterior
+                    if (f.prompt) {
+                        const promptDiv = document.createElement('div');
+                        promptDiv.innerHTML = f.prompt;
+                        historico.appendChild(promptDiv);
+                    }
+                    
+                    // Imprime o comando correto simulando que o usuário digitou perfeito
+                    const cmdDiv = document.createElement('div');
+                    let comandoCorreto = f.substituirComando ? f.substituirComando : (f.esperado[0] || "");
+                    cmdDiv.innerHTML = `C:\\SEMAE\\ATD-07&gt; <span style="color:var(--cor-sucesso);">${comandoCorreto}</span>`;
+                    historico.appendChild(cmdDiv);
+                    
+                    // Imprime o resultado de sucesso correspondente
+                    if (f.sucesso) {
+                        const successDiv = document.createElement('div');
+                        successDiv.innerHTML = f.sucesso;
+                        historico.appendChild(successDiv);
+                    }
+                    
+                    // Espaçamento limpo entre as fases reconstruídas
+                    const spacer = document.createElement('div');
+                    spacer.innerHTML = "<br>";
+                    historico.appendChild(spacer);
+                }
+                
+                // Força a liberação das páginas de manual com base no progresso recuperado
+                if (faseAtual >= 1) paginasLiberadas = Math.max(paginasLiberadas, 3);
+                if (faseAtual >= 3) paginasLiberadas = Math.max(paginasLiberadas, 4);
+                if (faseAtual >= 5) paginasLiberadas = Math.max(paginasLiberadas, 5);
+                if (faseAtual >= 6) paginasLiberadas = Math.max(paginasLiberadas, 6);
+                if (faseAtual >= 8) paginasLiberadas = Math.max(paginasLiberadas, 7);
+            }
+            
+            // 3. Imprime lentamente o prompt da fase ativa para o jogador responder agora
             await escreverNoTerminal(roteiro[faseAtual].prompt);
             
             digitando = false; terminalInput.disabled = false;
