@@ -149,9 +149,15 @@
                     }
 
                     // Formatação amigável das duas datas distintas
-                    const dataCadastro = u.created_at ? new Date(u.created_at).toLocaleDateString() : '-';
-                    const dataAtividade = u.updated_at !== "Sem atividade" ? new Date(u.updated_at).toLocaleDateString() : "Sem atividade";
-
+                    const dataCadastro = u.created_at ? new Date(u.created_at).toLocaleString('pt-BR') : '-';
+                    const dataAtividade = u.updated_at !== "Sem atividade" ? new Date(u.updated_at).toLocaleString('pt-BR') : "Sem atividade";
+                    
+                    // Exibe o progresso de digitação de forma legível e as estrelas reais separadas
+                    let progressoEstrelas = u.estrelas > 0 ? "★".repeat(u.estrelas) : "Sem Nota";
+                    if (u.conquista_aranha) {
+                        progressoEstrelas += " (Aranha)";
+                    }
+                    
                     tr.innerHTML = `
                         <td>${u.id}</td>
                         <td>${u.username}</td>
@@ -159,7 +165,7 @@
                         <td>${u.is_admin ? 'Sim' : 'Não'}</td>
                         <td>${dataCadastro}</td>
                         <td>${dataAtividade}</td>
-                        <td>${progresso}</td>
+                        <td style="color: var(--cor-texto); font-weight: bold;">${u.progresso_texto} [ ${progressoEstrelas} ]</td>
                         <td><button class="delete-button" onclick="del(${u.id})">Deletar</button></td>
                         <td></td>
                     `;

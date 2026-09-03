@@ -322,13 +322,10 @@
                     if (response.ok) {
                         const data = await response.json();
                         // Se já concluiu o Dia 1 (estrelas >= 2)
-                        if (data.estrelas >= 2) {
-                            // Salva o nome guardado no banco de volta no cache local
+                        if (data.progresso >= 1) {
                             localStorage.setItem('nomeEstagiario', data.username_jogo);
-                            
-                            // Redireciona o jogador diretamente para a mesa de trabalho
                             window.location.href = "/pi2/mesa";
-                            return; // Evita rodar as animações e renderizar a tela
+                            return;
                         }
                     }
                 } catch (e) {
@@ -398,7 +395,7 @@
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ 
-                            estrelas: 1, 
+                            progresso: 1, estrelas: 0, 
                             username_jogo: name 
                         })
                     });

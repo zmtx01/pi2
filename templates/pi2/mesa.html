@@ -1095,12 +1095,12 @@
                         }
 
                         // CONTROLE DO TELEFONE POR ESTADO REFINADO:
-                        if (data.estrelas === 2) {
-                            // Estado 2 (Chamado em progresso): O telefone já acende imediatamente
+                        if (data.progresso === 2) {
+                            // Chamado em andamento: acende o telefone de imediato
                             primeiraVisitaRealizada = true; 
                             acenderLuzChamado();
-                        } else if (data.estrelas >= 3) {
-                            // Estado 3 (Concluído): O telefone fica completamente desligado
+                        } else if (data.progresso >= 3) {
+                            // Desafio concluído: silêncio permanente
                             primeiraVisitaRealizada = true;
                             chamadoAtivo = false;
                         }

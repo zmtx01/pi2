@@ -164,7 +164,7 @@ def init_db():
     try:
         cur = conn.cursor()
         
-        # Cria a tabela de usuários
+        # Cria a tabela de usuários se não existir
         cur.execute("""
             CREATE TABLE IF NOT EXISTS users (
                 id SERIAL PRIMARY KEY,
@@ -185,6 +185,12 @@ def init_db():
                 conquista_aranha BOOLEAN DEFAULT FALSE,
                 updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             );
+        """)
+
+        # ADICIONA A COLUNA DE PROGRESSO SE ELA NÃO EXISTIR (Migração dinâmica)
+        cur.execute("""
+            ALTER TABLE semae_ranking 
+            ADD COLUMN IF NOT EXISTS progresso INTEGER DEFAULT 0;
         """)
         
         conn.commit()
@@ -302,9 +308,8 @@ def get_users():
 
     try:
         cur = conn.cursor()
-        # Seleciona dados do cadastro de usuários e do progresso de forma unificada
         cur.execute("""
-            SELECT u.id, u.username, u.is_admin, u.created_at, r.username, r.estrelas, r.conquista_aranha, r.updated_at
+            SELECT u.id, u.username, u.is_admin, u.created_at, r.username, r.estrelas, r.conquista_aranha, r.updated_at, r.progresso
             FROM users u
             LEFT JOIN semae_ranking r ON u.id = r.user_id
             ORDER BY u.created_at DESC
@@ -313,15 +318,22 @@ def get_users():
 
         users_list = []
         for u in users:
+            prog = u[8] if u[8] is not None else 0
+            prog_texto = "Iniciante"
+            if prog == 1: prog_texto = "Explorando Oficina"
+            elif prog == 2: prog_texto = "Dia 1 Em Progresso"
+            elif prog == 3: prog_texto = "Dia 1 Concluído"
+
             users_list.append({
                 "id": u[0],
-                "username": u[1],                     # Usuário da Conta (ex: 123)
+                "username": u[1],
                 "is_admin": u[2],
-                "created_at": u[3].strftime("%Y-%m-%d %H:%M:%S") if u[3] else None, # Data do Cadastro
-                "nick_jogo": u[4] if u[4] is not None else "Iniciante",             # Nome no Jogo (ex: aaa)
+                "created_at": u[3].strftime("%Y-%m-%d %H:%M:%S") if u[3] else None,
+                "nick_jogo": u[4] if u[4] is not None else "Iniciante",
                 "estrelas": u[5] if u[5] is not None else 0,
                 "conquista_aranha": u[6] if u[6] is not None else False,
-                "updated_at": u[7].strftime("%Y-%m-%d %H:%M:%S") if u[7] else "Sem atividade" # Último Progresso
+                "updated_at": u[7].strftime("%Y-%m-%d %H:%M:%S") if u[7] else "Sem atividade",
+                "progresso_texto": prog_texto # Texto que o admin exibirá
             })
             
         return jsonify(users_list), 200
@@ -383,12 +395,12 @@ def save_score():
         return jsonify({"message": "Não autorizado."}), 401
         
     data = request.get_json() or {}
-    estrelas = data.get('estrelas', 0)
+    estrelas = data.get('estrelas', 0)                  # Pontuação real (★)
+    progresso = data.get('progresso', 0)                # Estado do fluxo (0, 1, 2 ou 3)
     conquista_aranha = data.get('conquista_aranha', False)
-    username_jogo = data.get('username_jogo') # Captura o nick do jogo enviado pelo frontend
+    username_jogo = data.get('username_jogo')
     
     user_id = payload['user_id']
-    # Caso o jogo não envie um nick, usamos o usuário do login como fallback de segurança
     username = username_jogo if username_jogo else payload['username']
     
     conn = get_db_connection()
@@ -397,17 +409,18 @@ def save_score():
         
     try:
         cur = conn.cursor()
-        # Se houver conflito de ID, atualiza o nick estético, as estrelas (mantendo a maior), conquista e a data
+        # Faz o UPSERT garantindo o progresso e as estrelas de forma correta
         cur.execute("""
-            INSERT INTO semae_ranking (user_id, username, estrelas, conquista_aranha)
-            VALUES (%s, %s, %s, %s)
+            INSERT INTO semae_ranking (user_id, username, estrelas, progresso, conquista_aranha)
+            VALUES (%s, %s, %s, %s, %s)
             ON CONFLICT (user_id) 
             DO UPDATE SET 
                 username = EXCLUDED.username,
                 estrelas = GREATEST(semae_ranking.estrelas, EXCLUDED.estrelas),
+                progresso = GREATEST(semae_ranking.progresso, EXCLUDED.progresso),
                 conquista_aranha = semae_ranking.conquista_aranha OR EXCLUDED.conquista_aranha,
                 updated_at = CURRENT_TIMESTAMP
-        """, (user_id, username, estrelas, conquista_aranha))
+        """, (user_id, username, estrelas, progresso, conquista_aranha))
         
         conn.commit()
         cur.close()
@@ -470,7 +483,7 @@ def get_my_progress():
         
     try:
         cur = conn.cursor()
-        cur.execute("SELECT username, estrelas, conquista_aranha FROM semae_ranking WHERE user_id = %s", (user_id,))
+        cur.execute("SELECT username, estrelas, conquista_aranha, progresso FROM semae_ranking WHERE user_id = %s", (user_id,))
         res = cur.fetchone()
         cur.close()
         conn.close()
@@ -479,13 +492,15 @@ def get_my_progress():
             return jsonify({
                 "username_jogo": res[0],
                 "estrelas": res[1],
-                "conquista_aranha": res[2]
+                "conquista_aranha": res[2],
+                "progresso": res[3] if res[3] is not None else 0
             }), 200
         else:
             return jsonify({
                 "username_jogo": "",
                 "estrelas": 0,
-                "conquista_aranha": False
+                "conquista_aranha": False,
+                "progresso": 0
             }), 200
     except Exception as e:
         print(f"Erro ao buscar progresso pessoal: {e}")

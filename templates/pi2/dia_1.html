@@ -588,7 +588,7 @@
                         }
 
                         // Recupera a fase em progresso ou persiste o status de concluído
-                        if (data.estrelas === 2) {
+                        if (data.progresso === 2) {
                             // Estado 2 (Em progresso): Recupera a fase ativa se houver
                             const chaveFase = (data.username_jogo || 'Estagiário').toUpperCase() + '_fase_ativa';
                             const faseSalva = localStorage.getItem(chaveFase);
@@ -600,7 +600,7 @@
                                     console.log("Sessão recuperada. Retornando ao terminal na fase: " + faseAtual);
                                 }
                             }
-                        } else if (data.estrelas >= 3) {
+                        } else if (data.progresso >= 3) {
                             // Estado 3 (Concluído): Atualiza o painel lateral para Concluído em verde
                             const badge = document.getElementById('badge-sidebar');
                             if (badge) {
@@ -883,10 +883,7 @@
                 fetch('/api/save-score', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ 
-                        estrelas: 2, 
-                        username_jogo: localStorage.getItem('nomeEstagiario')
-                    })
+                    body: JSON.stringify({ progresso: 2, username_jogo: localStorage.getItem('nomeEstagiario') })
                 }).catch(function() {});
             }
             fecharChamados(); clicarTela();
@@ -1044,8 +1041,12 @@
                         fetch('/api/save-score', {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ estrelas: 3, conquista_aranha: conquistaAranha, username_jogo: localStorage.getItem('nomeEstagiario') }) // Estrela do Dia 1 = 2 (Aprendiz=1, Estagiário=2)
-                        
+                            body: JSON.stringify({ 
+                                progresso: 3, 
+                                estrelas: 3, // Somente agora o jogador ganha estrelas e entra no ranking!
+                                conquista_aranha: conquistaAranha,
+                                username_jogo: localStorage.getItem('nomeEstagiario')
+                            })
                         }).catch(function() {});
                     }
 
