@@ -875,7 +875,7 @@
 
         async function iniciarTerminalDia1() {
             errosTotaisNoDia = 0; // Reseta o rastreamento ao iniciar o dia
-            // GATILHO DE ENTRADA (MANDA PING SILENCIOSO PARA O RENDER ACORDAR EM SEGUNDO PLANO)
+            
             if (window.location.protocol !== 'file:') {
                 fetch('/api/server-status').catch(function() {});
                 
@@ -883,12 +883,14 @@
                 fetch('/api/save-score', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ progresso: 2, username_jogo: localStorage.getItem('nomeEstagiario') })
+                    body: JSON.stringify({ 
+                        progresso: 2, 
+                        username_jogo: localStorage.getItem('nomeEstagiario')
+                    })
                 }).catch(function() {});
             }
             fecharChamados(); clicarTela();
             
-            // Removida a linha que forçava o display:flex, pois a barra já nasce visível!
             historico.innerHTML = "";
             document.getElementById('btn-iniciar-jogo').style.display = 'none';
             document.getElementById('chamado-status').innerText = "Em atendimento";
@@ -897,10 +899,15 @@
             // LIBERAÇÃO IMEDIATA DA PÁGINA "PRINT" (Index 1) NO INÍCIO DO JOGO
             paginasLiberadas = Math.max(paginasLiberadas, 2);
 
-            jogoAtivo = true; faseAtual = 0; errosFase = 0; digitando = true;
-            terminalInput.disabled = true; document.getElementById('area-input').style.opacity = '.3';
+            // CORREÇÃO: O jogo fica ativo, mas mantemos o valor de faseAtual que foi recuperado no onload!
+            jogoAtivo = true; 
+            errosFase = 0; 
+            digitando = true;
+            terminalInput.disabled = true; 
+            document.getElementById('area-input').style.opacity = '.3';
             
-            await escreverNoTerminal(roteiro[0].prompt);
+            // CORREÇÃO: Imprime o prompt da fase atual recuperada (em vez de forçar a fase 0)
+            await escreverNoTerminal(roteiro[faseAtual].prompt);
             
             digitando = false; terminalInput.disabled = false;
             document.getElementById('area-input').style.opacity = '1';

@@ -321,10 +321,16 @@
                     const response = await fetch('/api/my-progress');
                     if (response.ok) {
                         const data = await response.json();
-                        // Se já concluiu o Dia 1 (estrelas >= 2)
-                        if (data.progresso >= 1) {
+                        
+                        if (data.progresso === 1) {
+                            // Estado 1 (Exploração): Manda para o prologue da mesa
                             localStorage.setItem('nomeEstagiario', data.username_jogo);
                             window.location.href = "/pi2/mesa";
+                            return;
+                        } else if (data.progresso >= 2) {
+                            // Estado 2 ou 3 (Em progresso / Concluído): Manda direto para o terminal de desafios
+                            localStorage.setItem('nomeEstagiario', data.username_jogo);
+                            window.location.href = "/pi2/dia1";
                             return;
                         }
                     }
