@@ -546,14 +546,21 @@
     </div>
 
     <script>
-
+        // 1. SEGURANÇA: Desloga se fechar a guia ou abrir direto em uma nova aba
         if (window.location.protocol !== 'file:') {
             if (!sessionStorage.getItem('aba_ativa')) {
                 window.location.href = '/logout';
             }
         }
-        
-        let progressoDoUsuario = 0;
+
+        // --- DECLARAÇÕES GLOBAIS ÚNICAS (Sem duplicidade) ---
+        let progressoDoUsuario = window.location.protocol === 'file:' ? 0 : -1;
+        let errosTotaisNoDia = 0;
+        let jogoAtivo = false;
+        let faseAtual = 0;
+        let errosFase = 0;
+        let digitando = false;
+
         // 2. LEITURA ÚNICA DE CARREGAMENTO (Configura mídias e status do chamado no terminal)
         async function inicializarTerminal() {
             const imgMesa = document.getElementById('imagem-mesa');
@@ -582,7 +589,7 @@
                     if (response.ok) {
                         const data = await response.json();
                         
-                        // Sincroniza o progresso na variável global
+                        // Sincroniza o progresso na variável global (Saindo do estado -1 para o estado real)
                         progressoDoUsuario = data.progresso;
 
                         // 2A. Define o visual da mesa de acordo com o banco
@@ -633,13 +640,7 @@
                     }
                 } catch (e) {
                     console.error("Erro ao carregar dados do banco no terminal:", e);
-                }
-            } 
-            // FLUXO LOCAL (Offline / file://) - Mantém a compatibilidade original
-            else {
-                const nomeEstagiarioCheck = (localStorage.getItem('nomeEstagiario') || 'Estagiário').toUpperCase();
-                if (localStorage.getItem(nomeEstagiarioCheck + '_conquistaAranha') === 'true' && imgMesa) {
-                    imgMesa.src = baseCaminho + 'mesa2.png';
+                    progressoDoUsuario = 0; // Fallback de segurança em caso de desconexão
                 }
             }
         }
@@ -650,6 +651,11 @@
 
         /* CONTROLES DE JANELA */
         function clicarTela() {
+            // BLINDAGEM: Ignora o clique se o banco ainda estiver respondendo na carga inicial (evita Condição de Corrida)
+            if (progressoDoUsuario === -1) {
+                return;
+            }
+
             // Se o chamado já está ativo e em progresso, o clique na tela já o joga direto para a continuação
             if (progressoDoUsuario === 2 && !jogoAtivo) {
                 iniciarTerminalDia1();
@@ -672,6 +678,7 @@
             telaBackdrop.style.display = 'flex';
             setTimeout(() => document.getElementById('prompt-input').focus(), 50);
         }
+
         function fecharTela() { document.getElementById('tela-backdrop').style.display = 'none'; document.getElementById('tela-backdrop').style.backgroundColor = 'rgba(0, 0, 0, 0.75)'; document.getElementById('tela-backdrop').style.pointerEvents = 'auto'; }
         function focarTela() { document.getElementById('tela-backdrop').style.zIndex = '480'; document.getElementById('manual-wrapper').style.zIndex = '450'; }
         function focarManual() { document.getElementById('manual-wrapper').style.zIndex = '490'; document.getElementById('tela-backdrop').style.zIndex = '450'; }
@@ -818,9 +825,7 @@
         const historico = document.getElementById('historico-linhas');
         const ghostText = document.getElementById('ghost-text');
         
-        let errosTotaisNoDia = 0;
-
-        let jogoAtivo = false, faseAtual = 0, errosFase = 0, digitando = false;
+        // --- DECLARAÇÕES DUPLICADAS REMOVIDAS DAQUI (FORAM UNIFICADAS NO TOPO DO SCRIPT) ---
 
         const nomeEstagiario = (localStorage.getItem('nomeEstagiario') || 'Estagiário').toUpperCase();
         document.getElementById('encaminhamento-nome-estagiario').innerText = nomeEstagiario;
