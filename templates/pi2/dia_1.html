@@ -642,7 +642,15 @@
                     console.error("Erro ao carregar dados do banco no terminal:", e);
                     progressoDoUsuario = 0; // Fallback de segurança em caso de desconexão
                 }
-            }
+                
+                // MÁGICA DA TRANSIÇÃO: Se o jogador foi rápido e já está com o terminal aberto 
+                // lendo a mensagem de "Aguarde", nós disparamos a atualização da tela automaticamente!
+                const telaBackdrop = document.getElementById('tela-backdrop');
+                if (telaBackdrop.style.display === 'flex') {
+                    clicarTela();
+                }
+
+            } 
         }
 
         // Executa a inicialização de carregamento única no terminal
@@ -651,17 +659,6 @@
 
         /* CONTROLES DE JANELA */
         function clicarTela() {
-            // BLINDAGEM: Ignora o clique se o banco ainda estiver respondendo na carga inicial (evita Condição de Corrida)
-            if (progressoDoUsuario === -1) {
-                return;
-            }
-
-            // Se o chamado já está ativo e em progresso, o clique na tela já o joga direto para a continuação
-            if (progressoDoUsuario === 2 && !jogoAtivo) {
-                iniciarTerminalDia1();
-                return;
-            }
-
             fecharArquivos(); fecharChamados();
             const telaBackdrop = document.getElementById('tela-backdrop');
             const manualWrapper = document.getElementById('manual-wrapper');
@@ -676,6 +673,42 @@
                 telaBackdrop.style.zIndex = '460'; 
             }
             telaBackdrop.style.display = 'flex';
+
+            const historico = document.getElementById('historico-linhas');
+            const areaInput = document.getElementById('area-input');
+
+            // 1. ESTADO DE CARREGAMENTO (-1): Mostra a tela de sincronização
+            if (progressoDoUsuario === -1) {
+                historico.innerHTML = `Microsoft Windows [versão 10.0.19045]
+(c) Microsoft Corporation. Todos os direitos reservados.
+
+=======================================================
+               TERMINAL OPERACIONAL SEMAE
+=======================================================
+<div class="interacao-amarela" style="margin-top:40px;">[SISTEMA] Sincronizando conexão segura. Aguarde...</div>`;
+                
+                areaInput.style.display = 'none'; // Esconde a barra de digitar para evitar cliques afobados
+                return;
+            }
+
+            // 2. ESTADO CARREGADO: Restaura a barra de digitar e decide qual tela mostrar
+            areaInput.style.display = 'flex';
+
+            // Se o chamado já está ativo e em progresso (Estado 2), aciona a reconstrução do histórico
+            if (progressoDoUsuario === 2 && !jogoAtivo) {
+                iniciarTerminalDia1();
+                return;
+            } else if (!jogoAtivo) {
+                // Tela ociosa padrão (Para Estado 0, 1 ou 3)
+                historico.innerHTML = `Microsoft Windows [versão 10.0.19045]
+(c) Microsoft Corporation. Todos os direitos reservados.
+
+=======================================================
+               TERMINAL OPERACIONAL SEMAE
+=======================================================
+<div class="interacao-amarela" style="margin-top:40px;">Nenhum atendimento iniciado. Verifique seus chamados.</div>`;
+            }
+
             setTimeout(() => document.getElementById('prompt-input').focus(), 50);
         }
 
