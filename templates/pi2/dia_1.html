@@ -546,10 +546,19 @@
     </div>
 
     <script>
+
+        if (window.location.protocol !== 'file:') {
+            if (!sessionStorage.getItem('aba_ativa')) {
+                window.location.href = '/logout';
+            }
+        }
         
-        const imgMesa = document.getElementById('imagem-mesa');
-        if (imgMesa) {
+        // 2. LEITURA ÚNICA DE CARREGAMENTO (Configura mídias e status do chamado no terminal)
+        async function inicializarTerminal() {
+            const imgMesa = document.getElementById('imagem-mesa');
             let baseCaminho = '';
+            
+            // Define o caminho híbrido das mídias
             if (window.location.protocol === 'file:') {
                 if (window.location.pathname.includes('/templates/pi2/')) {
                     baseCaminho = '../../static/pi2/';
@@ -559,14 +568,64 @@
             } else {
                 baseCaminho = '/static/pi2/';
             }
-            
-            const nomeEstagiarioCheck = (localStorage.getItem('nomeEstagiario') || 'Estagiário').toUpperCase();
-            if (localStorage.getItem(nomeEstagiarioCheck + '_conquistaAranha') === 'true') {
-                imgMesa.src = baseCaminho + 'mesa2.png';
-            } else {
-                imgMesa.src = baseCaminho + 'mesa.png';
+
+            // FLUXO SERVIDOR (Online)
+            if (window.location.protocol !== 'file:') {
+                try {
+                    const response = await fetch('/api/my-progress');
+                    if (response.ok) {
+                        const data = await response.json();
+
+                        // 2A. Define o visual da mesa de acordo com o banco
+                        if (data.conquista_aranha === true) {
+                            imgMesa.src = baseCaminho + 'mesa2.png';
+                            localStorage.setItem((data.username_jogo || 'Estagiário').toUpperCase() + '_conquistaAranha', 'true');
+                        } else {
+                            imgMesa.src = baseCaminho + 'mesa.png';
+                        }
+
+                        // 2B. Persiste o status de chamado concluído
+                        if (data.estrelas >= 2) {
+                            // Atualiza o crachá lateral da lista para Concluído
+                            const badge = document.getElementById('badge-sidebar');
+                            if (badge) {
+                                badge.textContent = "Concluído";
+                                badge.style.backgroundColor = "rgba(69, 207, 138, 0.15)";
+                                badge.style.color = "var(--cor-sucesso)";
+                                badge.style.borderColor = "var(--cor-sucesso)";
+                            }
+
+                            // Atualiza o status geral do chamado ativo
+                            const status = document.getElementById('chamado-status');
+                            if (status) {
+                                status.innerText = "Concluído";
+                                status.style.color = "var(--cor-sucesso)";
+                            }
+
+                            // Altera a ação do botão para modo de revisão/prática
+                            const btn = document.getElementById('btn-iniciar-jogo');
+                            if (btn) {
+                                btn.textContent = "[ REVER DESAFIO (PRATICAR) ]";
+                            }
+                        }
+                    }
+                } catch (e) {
+                    console.error("Erro ao carregar dados do banco no terminal:", e);
+                }
+            } 
+            // FLUXO LOCAL (Offline / file://) - Mantém a compatibilidade original
+            else {
+                const nomeEstagiarioCheck = (localStorage.getItem('nomeEstagiario') || 'Estagiário').toUpperCase();
+                if (localStorage.getItem(nomeEstagiarioCheck + '_conquistaAranha') === 'true') {
+                    imgMesa.src = baseCaminho + 'mesa2.png';
+                } else {
+                    imgMesa.src = baseCaminho + 'mesa.png';
+                }
             }
         }
+
+        // Executa a inicialização de carregamento única no terminal
+        window.addEventListener('load', inicializarTerminal);
 
 
         /* CONTROLES DE JANELA */

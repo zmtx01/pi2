@@ -272,6 +272,24 @@
     </div>
 
     <script>
+
+        function precarregarImagensDoJogo() {
+            const imagens = [
+                '/static/pi2/sala.png',
+                '/static/pi2/mesa.png',
+                '/static/pi2/mesa2.png'
+            ];
+            imagens.forEach(url => {
+                const img = new Image();
+                img.src = url;
+            });
+            console.log("Mídias de escritório e mesa pré-carregadas em segundo plano.");
+        }
+
+        // Dispara o pré-carregamento em segundo plano assim que a tela de login termina de carregar
+        window.addEventListener('load', precarregarImagensDoJogo);
+
+        
         const API = window.location.origin;
 
         const eyeOpen  = '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>';

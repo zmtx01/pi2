@@ -1053,23 +1053,68 @@
     <!-- LÓGICA DE TRANSIÇÃO (DIA 0 -> DIA 1) -->
     <script>
 
-        // DETECTOR HÍBRIDO DE CAMINHO DE IMAGENS (Mesa 1 ou Mesa 2)
-        const imgMesa = document.getElementById('imagem-mesa');
-        if (imgMesa) {
-            const baseCaminho = window.location.protocol === 'file:' ? '' : '/static/pi2/';
-            const nomeEstagiarioCheck = (localStorage.getItem('nomeEstagiario') || 'Estagiário').toUpperCase();
-            if (localStorage.getItem(nomeEstagiarioCheck + '_conquistaAranha') === 'true') {
-                imgMesa.src = baseCaminho + 'mesa2.png';
-            } else {
-                imgMesa.src = baseCaminho + 'mesa.png';
+        if (window.location.protocol !== 'file:') {
+            if (!sessionStorage.getItem('aba_ativa')) {
+                window.location.href = '/logout';
             }
         }
 
+        
+        // 1. SEGURANÇA: Desloga se fechar a guia ou abrir direto em uma nova aba
+        if (window.location.protocol !== 'file:') {
+            if (!sessionStorage.getItem('aba_ativa')) {
+                window.location.href = '/logout';
+            }
+        }
 
         let chamadoAtivo = false; 
         let primeiraVisitaRealizada = false; 
-        let chamadosAberto = false;  
+        let chamadosAberto = false;
 
+        // 2. LEITURA ÚNICA DE CARREGAMENTO (Configura o visual e o estado do telefone)
+        async function inicializarMesa() {
+            const imgMesa = document.getElementById('imagem-mesa');
+            const baseCaminho = window.location.protocol === 'file:' ? '' : '/static/pi2/';
+
+            // FLUXO SERVIDOR (Online)
+            if (window.location.protocol !== 'file:') {
+                try {
+                    const response = await fetch('/api/my-progress');
+                    if (response.ok) {
+                        const data = await response.json();
+
+                        // Define se exibe a mesa comum ou a mesa com a aranha com base no banco
+                        if (data.conquista_aranha === true) {
+                            imgMesa.src = baseCaminho + 'mesa2.png';
+                            // Salva também localmente por segurança para manter a sincronia híbrida
+                            localStorage.setItem((data.username_jogo || 'Estagiário').toUpperCase() + '_conquistaAranha', 'true');
+                        } else {
+                            imgMesa.src = baseCaminho + 'mesa.png';
+                        }
+
+                        // Se o jogador já concluiu o Dia 1 (estrelas >= 2), desativa o telefone silenciosamente
+                        if (data.estrelas >= 2) {
+                            primeiraVisitaRealizada = true; // Impede que o telefone comece a piscar
+                            chamadoAtivo = false;
+                        }
+                    }
+                } catch (e) {
+                    console.error("Erro ao carregar dados do banco na mesa:", e);
+                }
+            } 
+            // FLUXO LOCAL (Offline / file://) - Mantém a compatibilidade original
+            else {
+                const nomeEstagiarioCheck = (localStorage.getItem('nomeEstagiario') || 'Estagiário').toUpperCase();
+                if (localStorage.getItem(nomeEstagiarioCheck + '_conquistaAranha') === 'true') {
+                    imgMesa.src = baseCaminho + 'mesa2.png';
+                } else {
+                    imgMesa.src = baseCaminho + 'mesa.png';
+                }
+            }
+        }
+
+        // Executa a inicialização de carregamento única
+        window.addEventListener('load', inicializarMesa);
         /* --- CONTROLE DO MONITOR (TELA) --- */
         function clicarTela() {
             // Fechar arquivos e chamados se o monitor for aberto

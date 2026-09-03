@@ -221,6 +221,14 @@
     </div>
 
     <script>
+
+        if (window.location.protocol !== 'file:') {
+            if (!sessionStorage.getItem('aba_ativa')) {
+                window.location.href = '/logout';
+            }
+        }
+
+        
         const sleep = ms => new Promise(r => setTimeout(r, ms));
         let skipTyping = false;
 
@@ -298,8 +306,37 @@
             status.style.color = 'var(--cor-sucesso)';
         }
 
-        // Inicialização: O conteúdo da tela 1 já carrega direto (Sem atraso)
         async function iniciarPagina1() {
+            // 1. SEGURANÇA: Desloga se fechar a guia ou abrir direto em uma nova aba
+            if (window.location.protocol !== 'file:') {
+                if (!sessionStorage.getItem('aba_ativa')) {
+                    window.location.href = '/logout';
+                    return; // Interrompe a execução inicial
+                }
+            }
+
+            // 2. INTELIGÊNCIA DE PULO: Pula a introdução e o formulário se já tiver progresso no banco
+            if (window.location.protocol !== 'file:') {
+                try {
+                    const response = await fetch('/api/my-progress');
+                    if (response.ok) {
+                        const data = await response.json();
+                        // Se já concluiu o Dia 1 (estrelas >= 2)
+                        if (data.estrelas >= 2) {
+                            // Salva o nome guardado no banco de volta no cache local
+                            localStorage.setItem('nomeEstagiario', data.username_jogo);
+                            
+                            // Redireciona o jogador diretamente para a mesa de trabalho
+                            window.location.href = "/pi2/mesa";
+                            return; // Evita rodar as animações e renderizar a tela
+                        }
+                    }
+                } catch (e) {
+                    console.error("Erro ao verificar progresso para pulo de intro:", e);
+                }
+            }
+
+            // 3. FLUXO TRADICIONAL (Apenas para novos jogadores / estrelas < 2)
             skipTyping = false;
 
             const divSup = document.getElementById('div-sup');
@@ -314,23 +351,21 @@
             // Inicializa a barra de carregamento simultaneamente
             rodarBarraAscii();
 
-            // 1. Digita a linha superior (divisor) de forma rápida (velocidade 5)
+            // Digita a linha superior (divisor) de forma rápida (velocidade 5)
             await typeText(divSup, "==================================================================================================", 5);
             if (!skipTyping) await sleep(150);
 
-            // 2. Digita o título principal (velocidade 20)
+            // Digita o título principal (velocidade 20)
             await typeText(tituloTexto, "DIÁRIO DE UM ESTAGIÁRIO", 20);
             if (!skipTyping) await sleep(150);
 
-            // 3. Digita a linha inferior (divisor) de forma rápida (velocidade 5)
+            // Digita a linha inferior (divisor) de forma rápida (velocidade 5)
             await typeText(divInf, "==================================================================================================", 5);
             if (!skipTyping) await sleep(150);
 
-            // >>> ADICIONE ESTAS DUAS LINHAS AQUI: <<<
             const terminal = document.getElementById('terminal');
             terminal.classList.add('visivel');
 
-            // Habilita controles do formulário (o resto do seu código continua igual abaixo...)
             const input = document.getElementById('username');
             const btn = document.getElementById('btn-entrar');
 

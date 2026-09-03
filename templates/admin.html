@@ -57,9 +57,11 @@
             <thead>
                 <tr>
                     <th>ID</th>
-                    <th>Usuário</th>
+                    <th>Operador (Login)</th>
+                    <th>Estagiário (Jogo)</th>
                     <th>Admin?</th>
-                    <th>Criado em</th>
+                    <th>Cadastrado em</th>
+                    <th>Última Atividade</th>
                     <th>Progresso (Jogo)</th>
                     <th>Ações</th>
                     <th style="text-align: center;">Status</th>
@@ -113,8 +115,9 @@
                 users.forEach(user => {
                     const row = Array.from(document.querySelectorAll('#userTableBody tr')).find(r => r.cells[0].textContent == user.id);
                     if (row) {
-                        row.cells[6].innerHTML = `<span class="status-dot" style="background-color: ${color === 'green' ? 'green' : 'red'};"></span>`;
-                        row.cells[6].style.textAlign = "center";
+                        // Ajustado para o índice 8 (última coluna de status)
+                        row.cells[8].innerHTML = `<span class="status-dot" style="background-color: ${color === 'green' ? 'green' : 'red'};"></span>`;
+                        row.cells[8].style.textAlign = "center";
                     }
                 });
             } catch (e) { console.error("Erro status"); }
@@ -145,11 +148,17 @@
                         progresso += " (Aranha)";
                     }
 
+                    // Formatação amigável das duas datas distintas
+                    const dataCadastro = u.created_at ? new Date(u.created_at).toLocaleDateString() : '-';
+                    const dataAtividade = u.updated_at !== "Sem atividade" ? new Date(u.updated_at).toLocaleDateString() : "Sem atividade";
+
                     tr.innerHTML = `
                         <td>${u.id}</td>
                         <td>${u.username}</td>
+                        <td style="color: #1D9E75; font-weight: bold;">${u.nick_jogo}</td>
                         <td>${u.is_admin ? 'Sim' : 'Não'}</td>
-                        <td>${u.created_at ? new Date(u.created_at).toLocaleDateString() : '-'}</td>
+                        <td>${dataCadastro}</td>
+                        <td>${dataAtividade}</td>
                         <td>${progresso}</td>
                         <td><button class="delete-button" onclick="del(${u.id})">Deletar</button></td>
                         <td></td>

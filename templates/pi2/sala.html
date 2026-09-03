@@ -97,6 +97,14 @@
     </div>
 
     <script>
+
+        if (window.location.protocol !== 'file:') {
+            if (!sessionStorage.getItem('aba_ativa')) {
+                window.location.href = '/logout';
+            }
+        }
+
+        
         // 1. DETECTOR HÍBRIDO AVANÇADO DE CAMINHO DE IMAGENS
         const imgSala = document.getElementById('imagem-sala');
         if (imgSala) {

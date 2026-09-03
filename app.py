@@ -302,9 +302,9 @@ def get_users():
 
     try:
         cur = conn.cursor()
-        # Une as tabelas para exibir informações de contas e o progresso do jogo de uma só vez
+        # Seleciona dados do cadastro de usuários e do progresso de forma unificada
         cur.execute("""
-            SELECT u.id, u.username, u.is_admin, u.created_at, r.estrelas, r.conquista_aranha
+            SELECT u.id, u.username, u.is_admin, u.created_at, r.username, r.estrelas, r.conquista_aranha, r.updated_at
             FROM users u
             LEFT JOIN semae_ranking r ON u.id = r.user_id
             ORDER BY u.created_at DESC
@@ -315,11 +315,13 @@ def get_users():
         for u in users:
             users_list.append({
                 "id": u[0],
-                "username": u[1],
+                "username": u[1],                     # Usuário da Conta (ex: 123)
                 "is_admin": u[2],
-                "created_at": u[3].strftime("%Y-%m-%d %H:%M:%S") if u[3] else None,
-                "estrelas": u[4] if u[4] is not None else 0,
-                "conquista_aranha": u[5] if u[5] is not None else False
+                "created_at": u[3].strftime("%Y-%m-%d %H:%M:%S") if u[3] else None, # Data do Cadastro
+                "nick_jogo": u[4] if u[4] is not None else "Iniciante",             # Nome no Jogo (ex: aaa)
+                "estrelas": u[5] if u[5] is not None else 0,
+                "conquista_aranha": u[6] if u[6] is not None else False,
+                "updated_at": u[7].strftime("%Y-%m-%d %H:%M:%S") if u[7] else "Sem atividade" # Último Progresso
             })
             
         return jsonify(users_list), 200
@@ -383,10 +385,10 @@ def save_score():
     data = request.get_json() or {}
     estrelas = data.get('estrelas', 0)
     conquista_aranha = data.get('conquista_aranha', False)
-    username_jogo = data.get('username_jogo') # Pega o nome digitado no jogo (ex: 'aaa')
+    username_jogo = data.get('username_jogo') # Captura o nick do jogo enviado pelo frontend
     
     user_id = payload['user_id']
-    # Se o jogo não enviar um nome personalizado, usamos o usuário da conta como fallback
+    # Caso o jogo não envie um nick, usamos o usuário do login como fallback de segurança
     username = username_jogo if username_jogo else payload['username']
     
     conn = get_db_connection()
@@ -395,7 +397,7 @@ def save_score():
         
     try:
         cur = conn.cursor()
-        # Atualiza o registro. Se o usuário já existir, atualiza o nome do jogo, estrelas e conquista
+        # Se houver conflito de ID, atualiza o nick estético, as estrelas (mantendo a maior), conquista e a data
         cur.execute("""
             INSERT INTO semae_ranking (user_id, username, estrelas, conquista_aranha)
             VALUES (%s, %s, %s, %s)
@@ -452,6 +454,42 @@ def get_ranking():
     except Exception as e:
         print(f"Erro ao carregar ranking: {e}")
         return jsonify({"message": "Erro interno ao carregar ranking."}), 500
+
+# API para buscar o progresso do próprio usuário logado (Usada para saltar introdução)
+@app.route('/api/my-progress', methods=['GET'])
+def get_my_progress():
+    token = get_token_from_request()
+    payload = validate_token(token)
+    if not payload:
+        return jsonify({"message": "Não autorizado."}), 401
+        
+    user_id = payload['user_id']
+    conn = get_db_connection()
+    if not conn:
+        return jsonify({"message": "Erro de conexão com o banco de dados."}), 500
+        
+    try:
+        cur = conn.cursor()
+        cur.execute("SELECT username, estrelas, conquista_aranha FROM semae_ranking WHERE user_id = %s", (user_id,))
+        res = cur.fetchone()
+        cur.close()
+        conn.close()
+        
+        if res:
+            return jsonify({
+                "username_jogo": res[0],
+                "estrelas": res[1],
+                "conquista_aranha": res[2]
+            }), 200
+        else:
+            return jsonify({
+                "username_jogo": "",
+                "estrelas": 0,
+                "conquista_aranha": False
+            }), 200
+    except Exception as e:
+        print(f"Erro ao buscar progresso pessoal: {e}")
+        return jsonify({"message": "Erro interno de banco."}), 500
 
 if __name__ == '__main__':
     # Habilita a execução local na porta 5000
