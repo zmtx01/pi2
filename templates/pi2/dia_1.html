@@ -894,8 +894,12 @@
         ];
 
         async function iniciarTerminalDia1() {
+
+            if (jogoAtivo) return; 
+
+            jogoAtivo = true; // Trava o loop recursivo imediatamente!
             errosTotaisNoDia = 0; // Reseta o rastreamento ao iniciar o dia
-            
+                      
             if (window.location.protocol !== 'file:') {
                 fetch('/api/server-status').catch(function() {});
                 
@@ -909,7 +913,7 @@
                     })
                 }).catch(function() {});
             }
-            fecharChamados(); clicarTela();
+            fecharChamados();
             
             historico.innerHTML = "";
             document.getElementById('btn-iniciar-jogo').style.display = 'none';
