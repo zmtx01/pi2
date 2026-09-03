@@ -569,6 +569,11 @@
                 baseCaminho = '/static/pi2/';
             }
 
+            // CORREÇÃO VISUAL: Define a imagem comum instantaneamente para evitar o ícone quebrado
+            if (imgMesa) {
+                imgMesa.src = baseCaminho + 'mesa.png';
+            }
+
             // FLUXO SERVIDOR (Online)
             if (window.location.protocol !== 'file:') {
                 try {
@@ -576,30 +581,27 @@
                     if (response.ok) {
                         const data = await response.json();
 
-                        // 2A. Define o visual da mesa de acordo com o banco
-                        if (data.conquista_aranha === true) {
+                        // Define o visual da mesa de acordo com o banco
+                        if (data.conquista_aranha === true && imgMesa) {
                             imgMesa.src = baseCaminho + 'mesa2.png';
                             localStorage.setItem((data.username_jogo || 'Estagiário').toUpperCase() + '_conquistaAranha', 'true');
-                        } else {
-                            imgMesa.src = baseCaminho + 'mesa.png';
                         }
 
-                        // 2B. Persiste o status de chamado concluído
-                        if (data.estrelas === 1) {
-                            // Estado 1: Verifica se há alguma fase salva localmente para este usuário
+                        // Recupera a fase em progresso ou persiste o status de concluído
+                        if (data.estrelas === 2) {
+                            // Estado 2 (Em progresso): Recupera a fase ativa se houver
                             const chaveFase = (data.username_jogo || 'Estagiário').toUpperCase() + '_fase_ativa';
                             const faseSalva = localStorage.getItem(chaveFase);
                             
                             if (faseSalva !== null) {
                                 const indexFase = parseInt(faseSalva, 10);
-                                // Valida se o índice salvo é coerente com o roteiro
                                 if (indexFase > 0 && indexFase < roteiro.length) {
                                     faseAtual = indexFase;
                                     console.log("Sessão recuperada. Retornando ao terminal na fase: " + faseAtual);
                                 }
                             }
-                        } else if (data.estrelas >= 2) {
-                            // Estado 2: Atualiza o crachá lateral da lista para Concluído
+                        } else if (data.estrelas >= 3) {
+                            // Estado 3 (Concluído): Atualiza o painel lateral para Concluído em verde
                             const badge = document.getElementById('badge-sidebar');
                             if (badge) {
                                 badge.textContent = "Concluído";
@@ -608,14 +610,12 @@
                                 badge.style.borderColor = "var(--cor-sucesso)";
                             }
 
-                            // Atualiza o status geral do chamado ativo
                             const status = document.getElementById('chamado-status');
                             if (status) {
                                 status.innerText = "Concluído";
                                 status.style.color = "var(--cor-sucesso)";
                             }
 
-                            // Altera a ação do botão para modo de revisão/prática
                             const btn = document.getElementById('btn-iniciar-jogo');
                             if (btn) {
                                 btn.textContent = "[ REVER DESAFIO (PRATICAR) ]";
@@ -629,10 +629,8 @@
             // FLUXO LOCAL (Offline / file://) - Mantém a compatibilidade original
             else {
                 const nomeEstagiarioCheck = (localStorage.getItem('nomeEstagiario') || 'Estagiário').toUpperCase();
-                if (localStorage.getItem(nomeEstagiarioCheck + '_conquistaAranha') === 'true') {
+                if (localStorage.getItem(nomeEstagiarioCheck + '_conquistaAranha') === 'true' && imgMesa) {
                     imgMesa.src = baseCaminho + 'mesa2.png';
-                } else {
-                    imgMesa.src = baseCaminho + 'mesa.png';
                 }
             }
         }
@@ -880,6 +878,16 @@
             // GATILHO DE ENTRADA (MANDA PING SILENCIOSO PARA O RENDER ACORDAR EM SEGUNDO PLANO)
             if (window.location.protocol !== 'file:') {
                 fetch('/api/server-status').catch(function() {});
+                
+                // GATILHO SILENCIOSO: Grava que o chamado foi iniciado de fato (Estado 2)
+                fetch('/api/save-score', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        estrelas: 2, 
+                        username_jogo: localStorage.getItem('nomeEstagiario')
+                    })
+                }).catch(function() {});
             }
             fecharChamados(); clicarTela();
             
@@ -1036,7 +1044,7 @@
                         fetch('/api/save-score', {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ estrelas: 2, conquista_aranha: conquistaAranha, username_jogo: localStorage.getItem('nomeEstagiario') }) // Estrela do Dia 1 = 2 (Aprendiz=1, Estagiário=2)
+                            body: JSON.stringify({ estrelas: 3, conquista_aranha: conquistaAranha, username_jogo: localStorage.getItem('nomeEstagiario') }) // Estrela do Dia 1 = 2 (Aprendiz=1, Estagiário=2)
                         
                         }).catch(function() {});
                     }

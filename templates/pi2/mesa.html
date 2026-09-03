@@ -1076,6 +1076,11 @@
             const imgMesa = document.getElementById('imagem-mesa');
             const baseCaminho = window.location.protocol === 'file:' ? '' : '/static/pi2/';
 
+            // CORREÇÃO VISUAL: Define a imagem comum instantaneamente para evitar o ícone quebrado
+            if (imgMesa) {
+                imgMesa.src = baseCaminho + 'mesa.png';
+            }
+
             // FLUXO SERVIDOR (Online)
             if (window.location.protocol !== 'file:') {
                 try {
@@ -1083,25 +1088,23 @@
                     if (response.ok) {
                         const data = await response.json();
 
-                        // Define se exibe a mesa comum ou a mesa com a aranha com base no banco
-                        if (data.conquista_aranha === true) {
+                        // Define se exibe a mesa com a aranha com base no banco
+                        if (data.conquista_aranha === true && imgMesa) {
                             imgMesa.src = baseCaminho + 'mesa2.png';
                             localStorage.setItem((data.username_jogo || 'Estagiário').toUpperCase() + '_conquistaAranha', 'true');
-                        } else {
-                            imgMesa.src = baseCaminho + 'mesa.png';
                         }
 
-                        // CONTROLE DO TELEFONE POR ESTADO:
-                        if (data.estrelas === 1) {
-                            // Estado 1 (Chamado Ativo): O telefone acende imediatamente na carga da mesa
+                        // CONTROLE DO TELEFONE POR ESTADO REFINADO:
+                        if (data.estrelas === 2) {
+                            // Estado 2 (Chamado em progresso): O telefone já acende imediatamente
                             primeiraVisitaRealizada = true; 
                             acenderLuzChamado();
-                        } else if (data.estrelas >= 2) {
-                            // Estado 2 (Concluído): O telefone fica completamente desligado
+                        } else if (data.estrelas >= 3) {
+                            // Estado 3 (Concluído): O telefone fica completamente desligado
                             primeiraVisitaRealizada = true;
                             chamadoAtivo = false;
                         }
-                        // Se estrelas for 0, o fluxo do ritual segue o padrão original de novos usuários
+                        // Estado 1 (Exploração): estrelas é 1, então o telefone começa desligado para ele explorar!
                     }
                 } catch (e) {
                     console.error("Erro ao carregar dados do banco na mesa:", e);
@@ -1110,10 +1113,8 @@
             // FLUXO LOCAL (Offline / file://) - Mantém a compatibilidade original
             else {
                 const nomeEstagiarioCheck = (localStorage.getItem('nomeEstagiario') || 'Estagiário').toUpperCase();
-                if (localStorage.getItem(nomeEstagiarioCheck + '_conquistaAranha') === 'true') {
+                if (localStorage.getItem(nomeEstagiarioCheck + '_conquistaAranha') === 'true' && imgMesa) {
                     imgMesa.src = baseCaminho + 'mesa2.png';
-                } else {
-                    imgMesa.src = baseCaminho + 'mesa.png';
                 }
             }
         }
