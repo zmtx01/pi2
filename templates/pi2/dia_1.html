@@ -585,8 +585,21 @@
                         }
 
                         // 2B. Persiste o status de chamado concluído
-                        if (data.estrelas >= 2) {
-                            // Atualiza o crachá lateral da lista para Concluído
+                        if (data.estrelas === 1) {
+                            // Estado 1: Verifica se há alguma fase salva localmente para este usuário
+                            const chaveFase = (data.username_jogo || 'Estagiário').toUpperCase() + '_fase_ativa';
+                            const faseSalva = localStorage.getItem(chaveFase);
+                            
+                            if (faseSalva !== null) {
+                                const indexFase = parseInt(faseSalva, 10);
+                                // Valida se o índice salvo é coerente com o roteiro
+                                if (indexFase > 0 && indexFase < roteiro.length) {
+                                    faseAtual = indexFase;
+                                    console.log("Sessão recuperada. Retornando ao terminal na fase: " + faseAtual);
+                                }
+                            }
+                        } else if (data.estrelas >= 2) {
+                            // Estado 2: Atualiza o crachá lateral da lista para Concluído
                             const badge = document.getElementById('badge-sidebar');
                             if (badge) {
                                 badge.textContent = "Concluído";
@@ -1103,6 +1116,16 @@
         async function avancar() {
             faseAtual++; 
             errosFase = 0;
+
+            // GRAVAÇÃO DE SEGURANÇA: Salva a fase atual do estagiário no navegador
+            if (faseAtual < roteiro.length) {
+                const chaveFase = nomeEstagiario + '_fase_ativa';
+                localStorage.setItem(chaveFase, faseAtual);
+            } else {
+                // Se o jogo acabou, removemos o temporizador de progresso da memória do navegador
+                const chaveFase = nomeEstagiario + '_fase_ativa';
+                localStorage.removeItem(chaveFase);
+            }
             
             // LIBERAÇÃO PROGRESSIVA DE PÁGINAS DO MANUAL:
             if(faseAtual === 1) paginasLiberadas = Math.max(paginasLiberadas, 3); // Fase 1 -> Libera INPUT (Pág 2)

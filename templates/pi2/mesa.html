@@ -1086,17 +1086,22 @@
                         // Define se exibe a mesa comum ou a mesa com a aranha com base no banco
                         if (data.conquista_aranha === true) {
                             imgMesa.src = baseCaminho + 'mesa2.png';
-                            // Salva também localmente por segurança para manter a sincronia híbrida
                             localStorage.setItem((data.username_jogo || 'Estagiário').toUpperCase() + '_conquistaAranha', 'true');
                         } else {
                             imgMesa.src = baseCaminho + 'mesa.png';
                         }
 
-                        // Se o jogador já concluiu o Dia 1 (estrelas >= 2), desativa o telefone silenciosamente
-                        if (data.estrelas >= 2) {
-                            primeiraVisitaRealizada = true; // Impede que o telefone comece a piscar
+                        // CONTROLE DO TELEFONE POR ESTADO:
+                        if (data.estrelas === 1) {
+                            // Estado 1 (Chamado Ativo): O telefone acende imediatamente na carga da mesa
+                            primeiraVisitaRealizada = true; 
+                            acenderLuzChamado();
+                        } else if (data.estrelas >= 2) {
+                            // Estado 2 (Concluído): O telefone fica completamente desligado
+                            primeiraVisitaRealizada = true;
                             chamadoAtivo = false;
                         }
+                        // Se estrelas for 0, o fluxo do ritual segue o padrão original de novos usuários
                     }
                 } catch (e) {
                     console.error("Erro ao carregar dados do banco na mesa:", e);

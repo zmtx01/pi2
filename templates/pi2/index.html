@@ -391,6 +391,22 @@
         async function carregarTela2(name) {
             localStorage.setItem('nomeEstagiario', name);
 
+            // GATILHO SILENCIOSO: Salva imediatamente no banco que o usuário registrou o nome (Estado 1)
+            if (window.location.protocol !== 'file:') {
+                try {
+                    await fetch('/api/save-score', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ 
+                            estrelas: 1, 
+                            username_jogo: name 
+                        })
+                    });
+                } catch (e) {
+                    console.error("Falha ao salvar progresso inicial (Estado 1):", e);
+                }
+            }
+
             // Esconde o título e o rodapé. Como estão "absolute", a caixa principal NÃO sai do lugar!
             document.getElementById('cabecalho-principal').style.display = 'none';
             document.getElementById('conexao-ascii').style.display = 'none';
