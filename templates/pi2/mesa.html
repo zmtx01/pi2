@@ -763,7 +763,7 @@
 
     <!-- Centro: Imagem da Mesa de Trabalho -->
     <div class="sala-container">
-        <img id="imagem-mesa" alt="Mesa de Trabalho" class="imagem-centralizada" />
+        <img id="imagem-mesa" src="../../static/pi2/mesa.png" onerror="this.src='mesa.png'" alt="Mesa de Trabalho" class="imagem-centralizada" />
         
         <!-- Hitboxes Interativas Invisíveis -->
         <div id="hitbox-tela" class="hitbox" onclick="clicarTela()"></div>
@@ -1085,65 +1085,59 @@
 
         // 2. LEITURA ÚNICA DE CARREGAMENTO (Configura o visual e o estado do telefone)
         function revelarCenario(imgElement) {
-            if (imgElement.complete) {
+            const abrirCortina = () => {
                 document.body.style.transition = 'opacity 0.4s ease-in-out';
                 document.body.style.opacity = '1';
-            } else {
-                imgElement.onload = () => {
-                    document.body.style.transition = 'opacity 0.4s ease-in-out';
-                    document.body.style.opacity = '1';
-                };
+            };
+
+            if (imgElement && imgElement.complete && imgElement.naturalWidth !== 0) {
+                abrirCortina();
+            } else if (imgElement) {
+                imgElement.onload = abrirCortina;
+                imgElement.onerror = abrirCortina; // Se a imagem falhar, a tela abre do mesmo jeito!
             }
+            // Trava de socorro: se em 200ms nada aconteceu, abre a tela na marra
+            setTimeout(abrirCortina, 200);
         }
 
         // 2. LEITURA ÚNICA DE CARREGAMENTO (Configura o visual e o estado do telefone)
         async function inicializarMesa() {
             const imgMesa = document.getElementById('imagem-mesa');
-            const baseCaminho = window.location.protocol === 'file:' ? '' : '/static/pi2/';
+            let baseCaminho = window.location.protocol === 'file:' ? (window.location.pathname.includes('/templates/pi2/') ? '../../static/pi2/' : '') : '/static/pi2/';
 
-            // FLUXO SERVIDOR (Online)
-            if (window.location.protocol !== 'file:') {
-                try {
-                    const response = await fetch('/api/my-progress');
-                    if (response.ok) {
-                        const data = await response.json();
+            // 1. DECISÃO INSTANTÂNEA: Local vs Online com baseCaminho correto
+            const nomeEstagiarioCheck = (localStorage.getItem('nomeEstagiario') || 'Estagiário').toUpperCase();
+            const temAranha = localStorage.getItem(nomeEstagiarioCheck + '_conquistaAranha') === 'true';
 
-                        // Define a imagem final baseada no banco ANTES de abrir a cortina
-                        if (data.conquista_aranha === true && imgMesa) {
-                            imgMesa.src = baseCaminho + 'mesa2.png';
-                            localStorage.setItem((data.username_jogo || 'Estagiário').toUpperCase() + '_conquistaAranha', 'true');
-                        } else if (imgMesa) {
-                            imgMesa.src = baseCaminho + 'mesa.png';
-                        }
-                        
-                        // Agora que a imagem certa está definida, preparamos para revelar
-                        if(imgMesa) revelarCenario(imgMesa);
-
-                        // CONTROLE DO TELEFONE POR ESTADO REFINADO:
-                        if (data.progresso === 2) {
-                            // Chamado em andamento: acende o telefone de imediato
-                            primeiraVisitaRealizada = true; 
-                            acenderLuzChamado();
-                        } else if (data.progresso >= 3) {
-                            // Desafio concluído: silêncio permanente
-                            primeiraVisitaRealizada = true;
-                            chamadoAtivo = false;
-                        }
-                    }
-                } catch (e) {
-                    console.error("Erro ao carregar banco:", e);
-                    if (imgMesa) { imgMesa.src = baseCaminho + 'mesa.png'; revelarCenario(imgMesa); }
-                }
-            } 
-            // FLUXO LOCAL (Offline)
-            else {
-                const nomeEstagiarioCheck = (localStorage.getItem('nomeEstagiario') || 'Estagiário').toUpperCase();
-                if (localStorage.getItem(nomeEstagiarioCheck + '_conquistaAranha') === 'true' && imgMesa) {
+            if (imgMesa) {
+                if (temAranha) {
                     imgMesa.src = baseCaminho + 'mesa2.png';
-                } else if (imgMesa) {
-                    imgMesa.src = baseCaminho + 'mesa.png';
+                } else {
+                    imgMesa.src = baseCaminho + 'mesa.png'; // <- FALTAVA ESTA LINHA!
                 }
-                if(imgMesa) revelarCenario(imgMesa);
+                revelarCenario(imgMesa);
+            }
+
+            // 2. TRABALHO NAS SOMBRAS (Apenas no servidor)
+            if (window.location.protocol !== 'file:') {
+                fetch('/api/my-progress').then(response => {
+                    if (response.ok) return response.json();
+                }).then(data => {
+                    if (!data) return;
+                    
+                    if (data.conquista_aranha === true) {
+                        localStorage.setItem(nomeEstagiarioCheck + '_conquistaAranha', 'true');
+                        if (!temAranha && imgMesa) imgMesa.src = baseCaminho + 'mesa2.png';
+                    }
+
+                    if (data.progresso === 2) {
+                        primeiraVisitaRealizada = true; 
+                        acenderLuzChamado();
+                    } else if (data.progresso >= 3) {
+                        primeiraVisitaRealizada = true;
+                        chamadoAtivo = false;
+                    }
+                }).catch(e => console.error(e));
             }
         }
 

@@ -42,11 +42,13 @@
 
         .imagem-centralizada {
             display: block;
-            max-width: 50vw;
-            max-height: 50vh;
+            width: 100%;
+            max-width: 900px; /* Garante que não fique gigante */
+            aspect-ratio: 16 / 9; /* RESERVA O BURACO EXATO DA IMAGEM, O TEXTO NÃO PULA MAIS */
             object-fit: contain;
-            border: 2px solid #5FDCF2;
+            border: 2px solid var(--cor-texto, #5FDCF2);
             border-radius: 4px;
+            background-color: #050a0d; /* Fundo escuro enquanto a imagem não pisca na tela */
         }
 
         /* Configuração da Hitbox (Área clicável) original */
@@ -85,7 +87,7 @@
 
     <!-- Centro: Imagem com Hitbox interativa -->
     <div class="sala-container">
-        <img id="imagem-sala" alt="Sala do Escritório" class="imagem-centralizada" />
+        <img id="imagem-sala" src="../../static/pi2/sala.png" onerror="this.src='sala.png'" alt="Sala do Escritório" class="imagem-centralizada" />
         
         <!-- Área clicável (Hitbox) -->
         <div id="hitbox-mesa" onclick="clicarMesa()"></div>

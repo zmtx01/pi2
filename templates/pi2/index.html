@@ -307,6 +307,16 @@
         }
 
         async function iniciarPagina1() {
+
+            // TRUQUE DE PRÉ-CARREGAMENTO INVISÍVEL
+            const imgsParaBaixar = ['sala.png', 'mesa.png', 'mesa2.png'];
+            let pasta = window.location.protocol === 'file:' ? '' : '/static/pi2/';
+            imgsParaBaixar.forEach(arq => {
+                const imgOculta = new Image();
+                imgOculta.src = pasta + arq;
+            });
+
+
             // 1. SEGURANÇA: Desloga se fechar a guia ou abrir direto em uma nova aba
             if (window.location.protocol !== 'file:') {
                 if (!sessionStorage.getItem('aba_ativa')) {
@@ -443,14 +453,8 @@
                 document.removeEventListener('keydown', avancar);
                 document.removeEventListener('click', avancar);
                 
+                // Chama a transição de escurecer a tela (que agora faz o redirecionamento sozinha)
                 carregarTela3(); 
-
-                // REDIRECIONAMENTO HÍBRIDO INTELIGENTE
-                if (window.location.protocol === 'file:') {
-                    window.location.href = "sala.html"; // Localmente abre o sala.html (tudo minúsculo)
-                } else {
-                    window.location.href = "/pi2/sala"; // No servidor abre a rota segura /pi2/sala
-                }
             }
 
             // Aguarda um pequeno intervalo para evitar que o clique do ENTRAR passe direto
@@ -462,26 +466,17 @@
 
         // Função de transição para a Tela 3
         function carregarTela3() {
-            document.getElementById('terminal').style.display = 'none';
+            // Escurece o index suavemente e faz o redirecionamento limpo
+            document.body.style.transition = 'opacity 0.5s ease-in-out';
+            document.body.style.opacity = '0';
             
-            // Define o caminho correto da imagem dependendo de onde o jogo está rodando
-            const imgSala = document.getElementById('imagem-transicao');
-            if (imgSala) {
-                let baseCaminho = '';
+            setTimeout(() => {
                 if (window.location.protocol === 'file:') {
-                    if (window.location.pathname.includes('/templates/pi2/')) {
-                        baseCaminho = '../../static/pi2/';
-                    } else {
-                        baseCaminho = '';
-                    }
+                    window.location.href = "sala.html"; 
                 } else {
-                    baseCaminho = '/static/pi2/';
+                    window.location.href = "/pi2/sala"; 
                 }
-                imgSala.src = baseCaminho + 'sala.png';
-            }
-            
-            const screen3 = document.getElementById('screen-3');
-            screen3.style.display = 'flex';
+            }, 500); // Espera 500ms para a tela ficar toda preta e muda de página
         }
 
         window.onload = iniciarPagina1;

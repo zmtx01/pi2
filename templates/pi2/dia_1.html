@@ -270,7 +270,7 @@
 <body>
 
     <div class="sala-container">
-        <img id="imagem-mesa" src="mesa.png" alt="Mesa de Trabalho" class="imagem-centralizada" />
+        <img id="imagem-mesa" src="../../static/pi2/mesa.png" onerror="this.src='mesa.png'" alt="Mesa de Trabalho" class="imagem-centralizada" />
         
         <div id="hitbox-tela" class="hitbox" onclick="clicarTela()"></div>
         <div id="hitbox-arquivos" class="hitbox" onclick="clicarArquivos()"></div>
@@ -574,15 +574,19 @@
 
         // 2. LEITURA ÚNICA DE CARREGAMENTO (Configura mídias e status do chamado no terminal)
         function revelarCenario(imgElement) {
-            if (imgElement.complete) {
+            const abrirCortina = () => {
                 document.body.style.transition = 'opacity 0.4s ease-in-out';
                 document.body.style.opacity = '1';
-            } else {
-                imgElement.onload = () => {
-                    document.body.style.transition = 'opacity 0.4s ease-in-out';
-                    document.body.style.opacity = '1';
-                };
+            };
+
+            if (imgElement && imgElement.complete && imgElement.naturalWidth !== 0) {
+                abrirCortina();
+            } else if (imgElement) {
+                imgElement.onload = abrirCortina;
+                imgElement.onerror = abrirCortina; // Se a imagem falhar, a tela abre do mesmo jeito!
             }
+            // Trava de socorro: se em 200ms nada aconteceu, abre a tela na marra
+            setTimeout(abrirCortina, 200);
         }
 
         // 2. LEITURA ÚNICA DE CARREGAMENTO (Configura mídias e status do chamado no terminal)
@@ -590,76 +594,62 @@
             const imgMesa = document.getElementById('imagem-mesa');
             let baseCaminho = window.location.protocol === 'file:' ? (window.location.pathname.includes('/templates/pi2/') ? '../../static/pi2/' : '') : '/static/pi2/';
 
-            // FLUXO SERVIDOR (Online)
-            if (window.location.protocol !== 'file:') {
-                try {
-                    const response = await fetch('/api/my-progress');
-                    if (response.ok) {
-                        const data = await response.json();
-                        progressoDoUsuario = data.progresso;
+            // 1. DECISÃO INSTANTÂNEA COM CAMINHO HÍBRIDO
+            const nomeEstagiarioCheck = (localStorage.getItem('nomeEstagiario') || 'Estagiário').toUpperCase();
+            const temAranha = localStorage.getItem(nomeEstagiarioCheck + '_conquistaAranha') === 'true';
 
-                        // 2A. Define o visual da mesa e REVELA A CORTINA
-                        if (data.conquista_aranha === true && imgMesa) {
-                            imgMesa.src = baseCaminho + 'mesa2.png';
-                            localStorage.setItem((data.username_jogo || 'Estagiário').toUpperCase() + '_conquistaAranha', 'true');
-                        } else if (imgMesa) {
-                            imgMesa.src = baseCaminho + 'mesa.png';
-                        }
-                        if(imgMesa) revelarCenario(imgMesa);
-
-                        // 2B. Persiste o status de chamado em andamento ou concluído
-                        if (data.progresso === 2) {
-                            const btn = document.getElementById('btn-iniciar-jogo');
-                            if (btn) btn.textContent = "[ CONTINUAR ATENDIMENTO ]";
-
-                            const chaveFase = (data.username_jogo || 'Estagiário').toUpperCase() + '_fase_ativa';
-                            const faseSalva = localStorage.getItem(chaveFase);
-                            if (faseSalva !== null) {
-                                const indexFase = parseInt(faseSalva, 10);
-                                if (indexFase > 0 && indexFase < roteiro.length) {
-                                    faseAtual = indexFase;
-                                    console.log("Sessão recuperada. Retornando ao terminal na fase: " + faseAtual);
-                                }
-                            }
-                        } else if (data.progresso >= 3) {
-                            const badge = document.getElementById('badge-sidebar');
-                            if (badge) {
-                                badge.textContent = "Concluído";
-                                badge.style.backgroundColor = "rgba(69, 207, 138, 0.15)";
-                                badge.style.color = "var(--cor-sucesso)";
-                                badge.style.borderColor = "var(--cor-sucesso)";
-                            }
-                            const status = document.getElementById('chamado-status');
-                            if (status) {
-                                status.innerText = "Concluído";
-                                status.style.color = "var(--cor-sucesso)";
-                            }
-                            const btn = document.getElementById('btn-iniciar-jogo');
-                            if (btn) btn.textContent = "[ REVER DESAFIO (PRATICAR) ]";
-                        }
-                    }
-                } catch (e) {
-                    console.error("Erro ao carregar dados do banco no terminal:", e);
-                    progressoDoUsuario = 0; 
-                    if (imgMesa) { imgMesa.src = baseCaminho + 'mesa.png'; revelarCenario(imgMesa); }
-                }
-                
-                // MÁGICA DA TRANSIÇÃO (Se terminal já estiver aberto aguardando a sincronização)
-                const telaBackdrop = document.getElementById('tela-backdrop');
-                if (telaBackdrop && telaBackdrop.style.display === 'flex') {
-                    clicarTela();
-                }
-
-            } 
-            // FLUXO LOCAL (Offline)
-            else {
-                const nomeEstagiarioCheck = (localStorage.getItem('nomeEstagiario') || 'Estagiário').toUpperCase();
-                if (localStorage.getItem(nomeEstagiarioCheck + '_conquistaAranha') === 'true' && imgMesa) {
+            if (imgMesa) {
+                if (temAranha) {
                     imgMesa.src = baseCaminho + 'mesa2.png';
-                } else if (imgMesa) {
-                    imgMesa.src = baseCaminho + 'mesa.png';
+                } else {
+                    imgMesa.src = baseCaminho + 'mesa.png'; // <- FALTAVA ESTA LINHA!
                 }
-                if(imgMesa) revelarCenario(imgMesa);
+                revelarCenario(imgMesa);
+            }
+
+            // 2. TRABALHO NAS SOMBRAS (Apenas no servidor)
+            if (window.location.protocol !== 'file:') {
+                fetch('/api/my-progress').then(res => res.ok ? res.json() : null).then(data => {
+                    if(!data) return;
+
+                    progressoDoUsuario = data.progresso;
+                    if (data.conquista_aranha === true) {
+                        localStorage.setItem(nomeEstagiarioCheck + '_conquistaAranha', 'true');
+                        if (!temAranha && imgMesa) imgMesa.src = baseCaminho + 'mesa2.png';
+                    }
+
+                    if (data.progresso === 2) {
+                        const btn = document.getElementById('btn-iniciar-jogo');
+                        if (btn) btn.textContent = "[ CONTINUAR ATENDIMENTO ]";
+
+                        const chaveFase = nomeEstagiarioCheck + '_fase_ativa';
+                        const faseSalva = localStorage.getItem(chaveFase);
+                        if (faseSalva !== null) {
+                            faseAtual = parseInt(faseSalva, 10);
+                        }
+                    } else if (data.progresso >= 3) {
+                        const badge = document.getElementById('badge-sidebar');
+                        if (badge) {
+                            badge.textContent = "Concluído";
+                            badge.style.backgroundColor = "rgba(69, 207, 138, 0.15)";
+                            badge.style.color = "var(--cor-sucesso)";
+                            badge.style.borderColor = "var(--cor-sucesso)";
+                        }
+                        const status = document.getElementById('chamado-status');
+                        if (status) {
+                            status.innerText = "Concluído";
+                            status.style.color = "var(--cor-sucesso)";
+                        }
+                        const btn = document.getElementById('btn-iniciar-jogo');
+                        if (btn) btn.textContent = "[ REVER DESAFIO (PRATICAR) ]";
+                    }
+
+                    const telaBackdrop = document.getElementById('tela-backdrop');
+                    if (telaBackdrop && telaBackdrop.style.display === 'flex') clicarTela();
+
+                }).catch(e => {
+                    progressoDoUsuario = 0; 
+                });
             }
         }
 
