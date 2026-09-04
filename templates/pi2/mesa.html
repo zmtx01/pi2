@@ -1084,14 +1084,22 @@
         let chamadosAberto = false;
 
         // 2. LEITURA ÚNICA DE CARREGAMENTO (Configura o visual e o estado do telefone)
+        function revelarCenario(imgElement) {
+            if (imgElement.complete) {
+                document.body.style.transition = 'opacity 0.4s ease-in-out';
+                document.body.style.opacity = '1';
+            } else {
+                imgElement.onload = () => {
+                    document.body.style.transition = 'opacity 0.4s ease-in-out';
+                    document.body.style.opacity = '1';
+                };
+            }
+        }
+
+        // 2. LEITURA ÚNICA DE CARREGAMENTO (Configura o visual e o estado do telefone)
         async function inicializarMesa() {
             const imgMesa = document.getElementById('imagem-mesa');
             const baseCaminho = window.location.protocol === 'file:' ? '' : '/static/pi2/';
-
-            // CORREÇÃO VISUAL: Define a imagem comum instantaneamente para evitar o ícone quebrado
-            if (imgMesa) {
-                imgMesa.src = baseCaminho + 'mesa.png';
-            }
 
             // FLUXO SERVIDOR (Online)
             if (window.location.protocol !== 'file:') {
@@ -1100,11 +1108,16 @@
                     if (response.ok) {
                         const data = await response.json();
 
-                        // Define se exibe a mesa com a aranha com base no banco
+                        // Define a imagem final baseada no banco ANTES de abrir a cortina
                         if (data.conquista_aranha === true && imgMesa) {
                             imgMesa.src = baseCaminho + 'mesa2.png';
                             localStorage.setItem((data.username_jogo || 'Estagiário').toUpperCase() + '_conquistaAranha', 'true');
+                        } else if (imgMesa) {
+                            imgMesa.src = baseCaminho + 'mesa.png';
                         }
+                        
+                        // Agora que a imagem certa está definida, preparamos para revelar
+                        if(imgMesa) revelarCenario(imgMesa);
 
                         // CONTROLE DO TELEFONE POR ESTADO REFINADO:
                         if (data.progresso === 2) {
@@ -1116,18 +1129,21 @@
                             primeiraVisitaRealizada = true;
                             chamadoAtivo = false;
                         }
-                        // Estado 1 (Exploração): estrelas é 1, então o telefone começa desligado para ele explorar!
                     }
                 } catch (e) {
-                    console.error("Erro ao carregar dados do banco na mesa:", e);
+                    console.error("Erro ao carregar banco:", e);
+                    if (imgMesa) { imgMesa.src = baseCaminho + 'mesa.png'; revelarCenario(imgMesa); }
                 }
             } 
-            // FLUXO LOCAL (Offline / file://) - Mantém a compatibilidade original
+            // FLUXO LOCAL (Offline)
             else {
                 const nomeEstagiarioCheck = (localStorage.getItem('nomeEstagiario') || 'Estagiário').toUpperCase();
                 if (localStorage.getItem(nomeEstagiarioCheck + '_conquistaAranha') === 'true' && imgMesa) {
                     imgMesa.src = baseCaminho + 'mesa2.png';
+                } else if (imgMesa) {
+                    imgMesa.src = baseCaminho + 'mesa.png';
                 }
+                if(imgMesa) revelarCenario(imgMesa);
             }
         }
 

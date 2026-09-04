@@ -24,6 +24,8 @@
         }
 
         body {
+
+            opacity: 0;
             /* TEM QUE SER IGUAL A MESA */
             background-color: #000000;
             color: #5FDCF2;
@@ -571,25 +573,22 @@
         let digitando = false;
 
         // 2. LEITURA ÚNICA DE CARREGAMENTO (Configura mídias e status do chamado no terminal)
+        function revelarCenario(imgElement) {
+            if (imgElement.complete) {
+                document.body.style.transition = 'opacity 0.4s ease-in-out';
+                document.body.style.opacity = '1';
+            } else {
+                imgElement.onload = () => {
+                    document.body.style.transition = 'opacity 0.4s ease-in-out';
+                    document.body.style.opacity = '1';
+                };
+            }
+        }
+
+        // 2. LEITURA ÚNICA DE CARREGAMENTO (Configura mídias e status do chamado no terminal)
         async function inicializarTerminal() {
             const imgMesa = document.getElementById('imagem-mesa');
-            let baseCaminho = '';
-            
-            // Define o caminho híbrido das mídias
-            if (window.location.protocol === 'file:') {
-                if (window.location.pathname.includes('/templates/pi2/')) {
-                    baseCaminho = '../../static/pi2/';
-                } else {
-                    baseCaminho = '';
-                }
-            } else {
-                baseCaminho = '/static/pi2/';
-            }
-
-            // CORREÇÃO VISUAL: Define a imagem comum instantaneamente para evitar o ícone quebrado
-            if (imgMesa) {
-                imgMesa.src = baseCaminho + 'mesa.png';
-            }
+            let baseCaminho = window.location.protocol === 'file:' ? (window.location.pathname.includes('/templates/pi2/') ? '../../static/pi2/' : '') : '/static/pi2/';
 
             // FLUXO SERVIDOR (Online)
             if (window.location.protocol !== 'file:') {
@@ -597,25 +596,22 @@
                     const response = await fetch('/api/my-progress');
                     if (response.ok) {
                         const data = await response.json();
-                        
-                        // Sincroniza o progresso na variável global (Saindo do estado -1 para o estado real)
                         progressoDoUsuario = data.progresso;
 
-                        // 2A. Define o visual da mesa de acordo com o banco
+                        // 2A. Define o visual da mesa e REVELA A CORTINA
                         if (data.conquista_aranha === true && imgMesa) {
                             imgMesa.src = baseCaminho + 'mesa2.png';
                             localStorage.setItem((data.username_jogo || 'Estagiário').toUpperCase() + '_conquistaAranha', 'true');
+                        } else if (imgMesa) {
+                            imgMesa.src = baseCaminho + 'mesa.png';
                         }
+                        if(imgMesa) revelarCenario(imgMesa);
 
                         // 2B. Persiste o status de chamado em andamento ou concluído
                         if (data.progresso === 2) {
-                            // Estado 2 (Em progresso): Altera o botão principal para continuar
                             const btn = document.getElementById('btn-iniciar-jogo');
-                            if (btn) {
-                                btn.textContent = "[ CONTINUAR ATENDIMENTO ]";
-                            }
+                            if (btn) btn.textContent = "[ CONTINUAR ATENDIMENTO ]";
 
-                            // Verifica se há alguma fase salva localmente para este usuário
                             const chaveFase = (data.username_jogo || 'Estagiário').toUpperCase() + '_fase_ativa';
                             const faseSalva = localStorage.getItem(chaveFase);
                             if (faseSalva !== null) {
@@ -626,7 +622,6 @@
                                 }
                             }
                         } else if (data.progresso >= 3) {
-                            // Estado 3 (Concluído): Atualiza o painel lateral para Concluído em verde
                             const badge = document.getElementById('badge-sidebar');
                             if (badge) {
                                 badge.textContent = "Concluído";
@@ -634,32 +629,38 @@
                                 badge.style.color = "var(--cor-sucesso)";
                                 badge.style.borderColor = "var(--cor-sucesso)";
                             }
-
                             const status = document.getElementById('chamado-status');
                             if (status) {
                                 status.innerText = "Concluído";
                                 status.style.color = "var(--cor-sucesso)";
                             }
-
                             const btn = document.getElementById('btn-iniciar-jogo');
-                            if (btn) {
-                                btn.textContent = "[ REVER DESAFIO (PRATICAR) ]";
-                            }
+                            if (btn) btn.textContent = "[ REVER DESAFIO (PRATICAR) ]";
                         }
                     }
                 } catch (e) {
                     console.error("Erro ao carregar dados do banco no terminal:", e);
-                    progressoDoUsuario = 0; // Fallback de segurança em caso de desconexão
+                    progressoDoUsuario = 0; 
+                    if (imgMesa) { imgMesa.src = baseCaminho + 'mesa.png'; revelarCenario(imgMesa); }
                 }
                 
-                // MÁGICA DA TRANSIÇÃO: Se o jogador foi rápido e já está com o terminal aberto 
-                // lendo a mensagem de "Aguarde", nós disparamos a atualização da tela automaticamente!
+                // MÁGICA DA TRANSIÇÃO (Se terminal já estiver aberto aguardando a sincronização)
                 const telaBackdrop = document.getElementById('tela-backdrop');
-                if (telaBackdrop.style.display === 'flex') {
+                if (telaBackdrop && telaBackdrop.style.display === 'flex') {
                     clicarTela();
                 }
 
             } 
+            // FLUXO LOCAL (Offline)
+            else {
+                const nomeEstagiarioCheck = (localStorage.getItem('nomeEstagiario') || 'Estagiário').toUpperCase();
+                if (localStorage.getItem(nomeEstagiarioCheck + '_conquistaAranha') === 'true' && imgMesa) {
+                    imgMesa.src = baseCaminho + 'mesa2.png';
+                } else if (imgMesa) {
+                    imgMesa.src = baseCaminho + 'mesa.png';
+                }
+                if(imgMesa) revelarCenario(imgMesa);
+            }
         }
 
         // Executa a inicialização de carregamento única no terminal

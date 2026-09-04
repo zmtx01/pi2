@@ -116,20 +116,20 @@
         // 1. DETECTOR HÍBRIDO AVANÇADO DE CAMINHO DE IMAGENS
         const imgSala = document.getElementById('imagem-sala');
         if (imgSala) {
-            let baseCaminho = '';
-            if (window.location.protocol === 'file:') {
-                // Se você abriu localmente de dentro da pasta templates/pi2/
-                if (window.location.pathname.includes('/templates/pi2/')) {
-                    baseCaminho = '../../static/pi2/';
-                } else {
-                    // Se abriu de uma pasta de testes comum na área de trabalho
-                    baseCaminho = '';
-                }
-            } else {
-                // Se estiver rodando no servidor (Render ou localhost)
-                baseCaminho = '/static/pi2/';
-            }
+            let baseCaminho = window.location.protocol === 'file:' ? (window.location.pathname.includes('/templates/pi2/') ? '../../static/pi2/' : '') : '/static/pi2/';
+            
+            // Função que abre a cortina preta
+            const revelarCenario = () => {
+                document.body.style.transition = 'opacity 0.4s ease-in-out';
+                document.body.style.opacity = '1';
+            };
+
+            // Avisa o navegador para abrir a cortina SÓ quando a imagem terminar de se desenhar
+            imgSala.onload = revelarCenario;
             imgSala.src = baseCaminho + 'sala.png';
+            
+            // Caso a imagem já estivesse no cache rápido do computador
+            if (imgSala.complete) revelarCenario();
         }
 
         // 2. Recupera o nome salvo na tela inicial e atualiza o texto de boas-vindas
