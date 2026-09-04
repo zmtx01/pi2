@@ -55,11 +55,19 @@
         }
 
         .sala-container {
-            position: relative;
-            display: inline-block; 
-            max-width: 100%;
-            top: 0; /* REMOVA O top: -130px DAQUI! */
-        }
+        position: relative;
+        display: inline-block; 
+        max-width: 100%;
+        top: 0; 
+        min-height: 50vh; /* Segura o texto lá embaixo antes da foto carregar */
+        min-width: 50vw;  /* Previne encolhimento horizontal */
+        opacity: 0; /* Nasce invisível */
+        animation: surgirSuave 0.6s ease-in-out forwards; /* Aparece suavemente */
+    }
+
+    @keyframes surgirSuave {
+        to { opacity: 1; }
+    }
 
         .instrucao-texto {
             position: absolute;
