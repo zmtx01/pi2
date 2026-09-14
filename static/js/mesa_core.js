@@ -935,6 +935,42 @@ window.addEventListener('DOMContentLoaded', () => {
                 return;
             }
 
+            if (cmdLimpo === 'reset_all' || cmdLimpo === 'reset-all') {
+            this.value = "";
+            if (ghostText) ghostText.innerHTML = "";
+
+            const divCmd = document.createElement('div');
+            divCmd.innerHTML = `C:\\SEMAE\\ATD-07&gt; <span style="color:#fff;">${bruto}</span>`;
+            historico.appendChild(divCmd);
+
+            const divAviso = document.createElement('div');
+            divAviso.className = "transicao-verde";
+            divAviso.style.margin = "10px 0";
+            divAviso.innerText = "[SISTEMA] Resetando todas as configurações locais, conquistas e progresso...";
+            historico.appendChild(divAviso);
+            rolarTerminalAbaixo();
+
+            // 1. Limpa todas as chaves do navegador
+            localStorage.clear();
+
+            // 2. Se estiver online (Flask/Render), zera o progresso do banco
+            if (window.location.protocol !== 'file:') {
+                try {
+                    await fetch('/api/reset-my-progress', { method: 'POST' });
+                } catch (e) {}
+            }
+
+            // 3. Retorna para a tela 1 (Index)
+            setTimeout(() => {
+                if (window.location.protocol === 'file:') {
+                    window.location.href = 'index.html';
+                } else {
+                    window.location.href = '/pi2';
+                }
+            }, 1000);
+            return;
+            }
+
             // 4. SE O ATENDIMENTO NÃO COMEÇOU, MENSAGEM PADRÃO
             if (!jogoAtivo) {
                 const divCmd = document.createElement('div');

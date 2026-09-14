@@ -456,5 +456,29 @@ def get_my_progress():
     except Exception as e:
         return jsonify({"message": "Erro ao buscar progresso."}), 500
 
+@app.route('/api/reset-my-progress', methods=['POST'])
+def reset_my_progress():
+    token = get_token_from_request()
+    payload = validate_token(token)
+    if not payload:
+        return jsonify({"message": "Não autorizado."}), 401
+    user_id = payload['user_id']
+    conn = get_db_connection()
+    if not conn:
+        return jsonify({"message": "Erro de conexão."}), 500
+    try:
+        cur = conn.cursor()
+        cur.execute("""
+            UPDATE semae_ranking
+            SET progresso = 0, estrelas = 0, conquista_aranha = FALSE, updated_at = CURRENT_TIMESTAMP
+            WHERE user_id = %s
+        """, (user_id,))
+        conn.commit()
+        cur.close()
+        conn.close()
+        return jsonify({"message": "Progresso resetado com sucesso!"}), 200
+    except Exception as e:
+        return jsonify({"message": "Erro ao resetar."}), 500    
+
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5000)
