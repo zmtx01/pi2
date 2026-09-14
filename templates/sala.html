@@ -229,7 +229,12 @@
             }, 400);
         }
 
+        let redirecionandoMesa = false;
+
         function clicarMesa() {
+            if (redirecionandoMesa) return;
+            redirecionandoMesa = true;
+
             if (window.location.protocol === 'file:') {
                 window.location.href = "mesa.html";
             } else {

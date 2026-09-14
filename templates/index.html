@@ -381,95 +381,109 @@
             }
 
             const input = document.getElementById('username');
-            const btn = document.getElementById('btn-entrar');
+        const btn = document.getElementById('btn-entrar');
 
-            const enviarFormulario = () => {
-                const name = input.value.trim();
-                if (name) {
-                    if ('speechSynthesis' in window) window.speechSynthesis.cancel();
-                    carregarTela2(name);
-                } else {
-                    input.style.borderColor = '#E04A5F';
-                    setTimeout(() => input.style.borderColor = 'var(--cor-texto)', 1000);
-                }
-            };
+        let enviandoFormulario = false; // TRAVA 1: Impede disparos múltiplos no Enter
 
-            btn.addEventListener('click', enviarFormulario);
-            input.addEventListener('keypress', (e) => {
-                if (e.key === 'Enter') enviarFormulario();
-            });
-        }
+        const enviarFormulario = () => {
+            if (enviandoFormulario) return;
 
-        async function carregarTela2(name) {
-            localStorage.setItem('nomeEstagiario', name);
-            if ('speechSynthesis' in window) window.speechSynthesis.cancel();
+            const name = input.value.trim();
+            if (name) {
+                enviandoFormulario = true;
+                btn.disabled = true;
+                input.disabled = true;
 
-            const widget = document.getElementById('widget-acessibilidade');
-            if (widget) widget.style.display = 'none';
-
-            if (window.location.protocol !== 'file:') {
-                try {
-                    await fetch('/api/save-score', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ 
-                            progresso: 1, 
-                            estrelas: 0, 
-                            username_jogo: name 
-                        })
-                    });
-                } catch (e) {}
-            }
-
-            document.getElementById('cabecalho-principal').style.display = 'none';
-            document.getElementById('conexao-ascii').style.display = 'none';
-            
-            const screen1 = document.getElementById('screen-1');
-            const screen2 = document.getElementById('screen-2');
-            
-            screen1.style.display = 'none';
-            screen2.style.display = 'block';
-            screen2.innerHTML = ''; 
-
-            skipTyping = false; 
-
-            if (typeof falarTexto === 'function') {
-                falarTexto(`Carregando perfil. Estagiário: ${name}. Setor: Tecnologia da Informação. Cargo: Estagiário de T.I. Status: Novo Estagiário.`, 'teclado');
-            }
-
-            await printLineSlow(screen2, "CARREGANDO PERFIL...", 25);
-            await printEstagiarioLine(screen2, name, 25);
-            await printLineSlow(screen2, "Setor: Tecnologia da Informação", 25);
-            await printLineSlow(screen2, "Cargo: Estagiário de TI", 25);
-            await printLineSlow(screen2, "Status:", 25);
-            await printLineSlow(screen2, "NOVO ESTAGIÁRIO", 25);
-
-            const btnTurno = document.createElement('button');
-            btnTurno.id = 'btn-iniciar-turno';
-            btnTurno.className = 'btn-iniciar-turno';
-            btnTurno.tabIndex = 1;
-            btnTurno.setAttribute('data-fala', 'Botão: Pressione qualquer tecla ou clique para iniciar o seu turno...');
-            btnTurno.textContent = '[ Pressione qualquer tecla ou clique para iniciar o seu turno... ]';
-            screen2.appendChild(btnTurno);
-            btnTurno.focus();
-
-            function avancar(e) {
-                if (e) e.preventDefault();
                 if ('speechSynthesis' in window) window.speechSynthesis.cancel();
-                document.removeEventListener('keydown', teclaAvancar);
-                btnTurno.removeEventListener('click', avancar);
-                carregarTela3(); 
+                carregarTela2(name);
+            } else {
+                input.style.borderColor = '#E04A5F';
+                setTimeout(() => input.style.borderColor = 'var(--cor-texto)', 1000);
             }
+        };
 
-            function teclaAvancar(e) {
-                avancar(e);
-            }
+        btn.addEventListener('click', enviarFormulario);
+        input.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') enviarFormulario();
+        });
+    }
 
-            btnTurno.addEventListener('click', avancar);
-            setTimeout(() => {
-                document.addEventListener('keydown', teclaAvancar);
-            }, 300);
+    async function carregarTela2(name) {
+        localStorage.setItem('nomeEstagiario', name);
+        if ('speechSynthesis' in window) window.speechSynthesis.cancel();
+
+        const widget = document.getElementById('widget-acessibilidade');
+        if (widget) widget.style.display = 'none';
+
+        if (window.location.protocol !== 'file:') {
+            try {
+                await fetch('/api/save-score', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        progresso: 1, 
+                        estrelas: 0, 
+                        username_jogo: name 
+                    })
+                });
+            } catch (e) {}
         }
+
+        document.getElementById('cabecalho-principal').style.display = 'none';
+        document.getElementById('conexao-ascii').style.display = 'none';
+        
+        const screen1 = document.getElementById('screen-1');
+        const screen2 = document.getElementById('screen-2');
+        
+        screen1.style.display = 'none';
+        screen2.style.display = 'block';
+        screen2.innerHTML = ''; 
+
+        skipTyping = false; 
+
+        if (typeof falarTexto === 'function') {
+            falarTexto(`Carregando perfil. Estagiário: ${name}. Setor: Tecnologia da Informação. Cargo: Estagiário de T.I. Status: Novo Estagiário.`, 'teclado');
+        }
+
+        await printLineSlow(screen2, "CARREGANDO PERFIL...", 25);
+        await printEstagiarioLine(screen2, name, 25);
+        await printLineSlow(screen2, "Setor: Tecnologia da Informação", 25);
+        await printLineSlow(screen2, "Cargo: Estagiário de TI", 25);
+        await printLineSlow(screen2, "Status:", 25);
+        await printLineSlow(screen2, "NOVO ESTAGIÁRIO", 25);
+
+        const btnTurno = document.createElement('button');
+        btnTurno.id = 'btn-iniciar-turno';
+        btnTurno.className = 'btn-iniciar-turno';
+        btnTurno.tabIndex = 1;
+        btnTurno.setAttribute('data-fala', 'Botão: Pressione qualquer tecla ou clique para iniciar o seu turno...');
+        btnTurno.textContent = '[ Pressione qualquer tecla ou clique para iniciar o seu turno... ]';
+        screen2.appendChild(btnTurno);
+        btnTurno.focus();
+
+        let transicaoIniciada = false; // TRAVA 2: Impede duplo avanço para a sala
+
+        function avancar(e) {
+            if (e) e.preventDefault();
+            if (transicaoIniciada) return;
+            transicaoIniciada = true;
+
+            btnTurno.disabled = true;
+            if ('speechSynthesis' in window) window.speechSynthesis.cancel();
+            document.removeEventListener('keydown', teclaAvancar);
+            btnTurno.removeEventListener('click', avancar);
+            carregarTela3(); 
+        }
+
+        function teclaAvancar(e) {
+            avancar(e);
+        }
+
+        btnTurno.addEventListener('click', avancar);
+        setTimeout(() => {
+            document.addEventListener('keydown', teclaAvancar);
+        }, 300);
+    }
 
         function carregarTela3() {
             document.body.style.transition = 'opacity 0.5s ease-in-out';

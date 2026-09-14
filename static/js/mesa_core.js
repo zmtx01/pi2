@@ -836,7 +836,12 @@ async function avancarFaseJogo() {
     }
 }
 
+let encerrandoAtendimento = false;
+
 function encerrarDia() {
+    if (encerrandoAtendimento) return;
+    encerrandoAtendimento = true;
+
     progressoDoUsuario = 3;
     chamadoAtivo = false;
     jogoAtivo = false;
@@ -846,6 +851,9 @@ function encerrarDia() {
 
     fecharTela();
     clicarChamados();
+
+    // Libera a trava após 1 segundo caso ele queira rever novamente
+    setTimeout(() => { encerrandoAtendimento = false; }, 1000);
 }
 
 
