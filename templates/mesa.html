@@ -1,0 +1,341 @@
+<!-- ========================================================= -->
+<!-- pi2/templates/mesa.html                                   -->
+<!-- ========================================================= -->
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <!-- 1. METADADOS E CARREGAMENTO HÍBRIDO DO CSS -->
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Diário de um Estagiário - Sua Mesa</title>
+
+    <script>
+        const _baseStatic = window.location.protocol === 'file:' ? '../static/' : '/static/';
+        document.write('<link rel="stylesheet" href="' + _baseStatic + 'css/mesa.css">');
+    </script>
+</head>
+<body>
+
+    <!-- 2. CENÁRIO DA MESA COM HITBOXES -->
+    <div class="sala-container">
+        <img id="imagem-mesa" alt="Mesa de Trabalho" class="imagem-centralizada" />
+
+        <!-- Hitbox 1: Monitor / CMD -->
+        <div id="hitbox-tela" class="hitbox" tabindex="1" role="button" onclick="clicarTela()">
+            <span class="tag-hitbox">[ MONITOR ]</span>
+        </div>
+
+        <!-- Hitbox 2: Manual dos Estagiários -->
+        <div id="hitbox-manual" class="hitbox" tabindex="2" role="button" onclick="clicarManual()">
+            <span class="tag-hitbox">[ MANUAL ]</span>
+        </div>
+
+        <!-- Hitbox 3: Telefone / Chamados -->
+        <div id="hitbox-chamados" class="hitbox" tabindex="3" role="button" onclick="clicarChamados()">
+            <span class="tag-hitbox">[ TELEFONE ]</span>
+        </div>
+
+        <!-- Hitbox 4: Gaveta de Arquivos -->
+        <div id="hitbox-arquivos" class="hitbox" tabindex="4" role="button" onclick="clicarArquivos()">
+            <span class="tag-hitbox">[ ARQUIVOS ]</span>
+        </div>
+
+        <!-- Luz decorativa do telefone -->
+        <div id="luz-telefone"></div>
+
+        <!-- Instrução de texto na base -->
+        <div class="instrucao-texto" id="instrucao-texto" tabindex="5">
+            Explore um pouco e veja o que encontra.
+        </div>
+    </div>
+
+    <!-- 3. JANELA FLUTUANTE DE ARQUIVOS -->
+    <div class="arquivos-backdrop" id="arquivos-backdrop" onclick="fecharArquivos()">
+        <div class="terminal-box" onclick="event.stopPropagation()">
+            <div class="titulo-alerta">ACESSO RESTRITO</div>
+            <div class="mensagem-alerta">
+                Você ainda não pode mexer nos arquivos.
+            </div>
+        </div>
+    </div>
+
+    <!-- 4. CADERNO 3D (MANUAL DOS ESTAGIÁRIOS - PÁGINAS 0 A 6) -->
+    <div class="manual-backdrop" id="manual-backdrop" onclick="fecharTudo()"></div>
+    <div class="manual-wrapper-posicao" id="manual-wrapper" onclick="focarManual()">
+        <div class="caderno-moldura" id="caderno" onclick="cliqueNoCaderno(event)">
+
+            <!-- Página 0: Capa / Intro -->
+            <div class="pagina ativa">
+                <div class="carimbo-python">SINTAXE OFICIAL: PYTHON 3</div>
+                <div class="titulo-pagina">MANUAL DOS ESTAGIÁRIOS</div>
+                Se você está lendo isso, provavelmente acabou de entrar no TI.<br><br>
+                Primeira regra:<br>
+                <span class="regra-destaque">não entre em pânico.</span><br><br>
+                Segunda regra:<br>
+                <span class="regra-destaque">leia o chamado antes de mexer em qualquer coisa.</span><br><br>
+                Terceira regra:<br>
+                <span class="regra-destaque">se não souber o que fazer, procure primeiro.</span><br><br>
+
+                <div class="nota-manuscrita">
+                    "Anotação: O terminal aceita letras maiúsculas e minúsculas com tolerância de espaço para facilitar, mas o interpretador Python real na internet é bem rígido!"
+                </div>
+
+                <div class="quadro-azul" style="margin-top: 90px; color: #1a1a1a;">
+                    Novas páginas serão adicionadas conforme você avança pelos dias de treinamento.<br><br>
+                    <span style="color: #1a4cd6;">
+                        Canto direito: avançar para a próxima página →<br>
+                        ← Canto esquerdo: voltar para a página anterior
+                    </span><br><br>
+                    Consulte o manual sempre que precisar.
+                </div>
+            </div>
+
+            <!-- Página 1: print() -->
+            <div class="pagina">
+                <div class="carimbo-python">COMANDO: print()</div>
+                <div class="titulo-pagina">MANUAL — PÁGINA 1</div>
+                <div class="subtitulo-pagina">PRIMEIRA REGRA</div>
+                <span class="regra-destaque">"Não entre em pânico."</span><br><br>
+                Se você não sabe como resolver alguma coisa, não tente adivinhar. Leia o problema. Entenda o que está sendo pedido. Procure a informação necessária. Só então tente resolver.<br><br>
+                <div class="subtitulo-pagina">print()</div>
+                O comando print() serve para mostrar uma informação na tela.<br><br>
+                Exemplos refinados:<br>
+                print("Olá, mundo!") → Texto na tela: Olá, mundo!<br>
+                print(100) → Número na tela: 100<br><br>
+                <div class="nota-manuscrita">
+                    "Anotação rápida: Textos para exibir sempre precisam de aspas duplas (\") ou simples (\'). Mas se for apenas números, pode colocar direto nos parênteses!"
+                </div>
+                <br>
+                <strong>Referência rápida:</strong><br>
+                Comando: print() | Função: mostrar uma informação
+            </div>
+
+            <!-- Página 2: input() -->
+            <div class="pagina">
+                <div class="carimbo-python">COMANDO: input()</div>
+                <div class="titulo-pagina">MANUAL — PÁGINA 2</div>
+                <div class="subtitulo-pagina">O COMPUTADOR TAMBÉM PODE PERGUNTAR</div>
+                O comando input() permite que o programa receba uma informação.<br>
+                Ele também pode apresentar uma pergunta antes de esperar a resposta.<br><br>
+                Exemplo:<br>
+                input("Qual é o seu nome? ")<br><br>
+                O computador mostra:<br>
+                Qual é o seu nome?<br>
+                E espera que alguém digite uma resposta.<br><br>
+                <div class="nota-manuscrita">
+                    "Anote aí: se o computador fala com o print(), ele escuta e recebe com o input()!"
+                </div>
+                <br>
+                <strong>Referência rápida:</strong><br>
+                print() → mostrar | input() → perguntar/receber
+            </div>
+
+            <!-- Página 3: Variáveis -->
+            <div class="pagina">
+                <div class="carimbo-python">CONCEITO: VARIÁVEIS</div>
+                <div class="titulo-pagina">MANUAL — PÁGINA 3</div>
+                <div class="subtitulo-pagina">VARIÁVEIS</div>
+                Uma variável é um espaço utilizado pelo programa para guardar uma informação.<br><br>
+                Imagine uma caixa rotulada:<br>
+                usuario<br>
+                ┌──────────────────────┐<br>
+                │ Rafael Mendes        │<br>
+                └──────────────────────┘<br><br>
+                Podemos guardar uma informação:<br>
+                usuario = "Rafael Mendes"<br><br>
+                E depois recuperar:<br>
+                print(usuario)<br><br>
+                <div class="nota-manuscrita">
+                    "Dica: O nome da variável é como a etiqueta da caixa (usuario). O valor armazenado dentro dela (Rafael Mendes) pode mudar a qualquer momento."
+                </div>
+            </div>
+
+            <!-- Página 4: Booleanos -->
+            <div class="pagina">
+                <div class="carimbo-python">TIPO: BOOLEANO (TRUE / FALSE)</div>
+                <div class="titulo-pagina">MANUAL — PÁGINA 4</div>
+                <div class="subtitulo-pagina">TRUE E FALSE</div>
+                Algumas informações representam apenas duas possibilidades.<br>
+                Ligado ou desligado. Ativo ou inativo. Conectado ou desconectado.<br><br>
+                Em Python representamos isso usando:<br>
+                <span class="regra-destaque">True</span> e <span class="regra-destaque">False</span><br><br>
+                Exemplo:<br>
+                computador_ligado = True (Computador está ligado)<br>
+                computador_ligado = False (Computador está desligado)<br><br>
+                <div class="nota-manuscrita">
+                    "Atenção! No Python, True e False devem obrigatoriamente começar com letra MAIÚSCULA. Escrever 'true' ou 'false' minúsculo causará erro de sintaxe."
+                </div>
+            </div>
+
+            <!-- Página 5: Decisões (if) -->
+            <div class="pagina">
+                <div class="carimbo-python">ESTRUTURA: TOMADA DE DECISÃO</div>
+                <div class="titulo-pagina">MANUAL — PÁGINA 5</div>
+                <div class="subtitulo-pagina">FAZENDO O COMPUTADOR DECIDIR</div>
+                Agora podemos fazer o computador escolher uma ação dependendo de uma condição.<br><br>
+                <span class="regra-destaque">if</span> → significa "se" (if computador_ligado:)<br>
+                <span class="regra-destaque">else</span> → significa "caso contrário" (else:)<br><br>
+                <div class="nota-manuscrita">
+                    "Regra 1: O sinal de '=' serve para ATRIBUIR (guardar) valores. Para COMPARAR se algo é igual, você deve usar '==' dentro do if."
+                </div>
+                <div class="nota-manuscrita">
+                    "Regra 2 (Condição Oculta): Escrever 'if computador_ligado:' já é o bastante! Como a variável já guarda True ou False, o Python sabe interpretá-la diretamente. Usar '== True' é redundante!"
+                </div>
+            </div>
+
+            <!-- Página 6: Alternativa (else) -->
+            <div class="pagina">
+                <div class="carimbo-python">ESTRUTURA: ALTERNATIVA COM ELSE</div>
+                <div class="titulo-pagina">MANUAL — PÁGINA 6</div>
+                <div class="subtitulo-pagina">CASO CONTRÁRIO</div>
+                O comando <span class="regra-destaque">else</span> define o caminho quando o if for falso.<br><br>
+                Estrutura:<br>
+                if computador_ligado:<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;print("ESTAÇÃO OPERACIONAL")<br>
+                else:<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;print("VERIFICAR ESTAÇÃO")<br><br>
+                <div class="nota-manuscrita">
+                    "Lembrete: nunca esqueça os dois-pontos (:) ao final de if e else, e mantenha os comandos subordinados indentados!"
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- 5. SIMULADOR DE CHAMADOS -->
+    <div class="chamados-backdrop" id="chamados-backdrop" onclick="fecharChamados()">
+        <div class="navegador-container" onclick="event.stopPropagation()">
+
+            <div class="navegador-topo">
+                <div class="botoes-janela">
+                    <div class="botao-janela-circulo"></div>
+                    <div class="botao-janela-circulo"></div>
+                    <div class="botao-janela-circulo"></div>
+                </div>
+                <div class="barra-endereco">
+                    <span class="protocolo-seguro">HTTPS://</span> intranet.semae.gov.br/chamados
+                </div>
+                <div class="botao-fechar-x" onclick="fecharChamados()">X</div>
+            </div>
+
+            <div class="conteudo-web">
+                <div class="sidebar-chamados">
+                    <div class="sidebar-titulo">Atendimentos</div>
+                    <div class="lista-chamados" id="sidebar-lista">
+                        <div style="padding: 25px; text-align: center; font-size: 0.8rem; color: #556a75; font-style: italic; line-height: 1.5;">
+                            Nenhum chamado pendente...
+                        </div>
+                    </div>
+                </div>
+
+                <div class="painel-principal" id="painel-chamados-conteudo">
+                    <div class="tela-boas-vindas">
+                        <div class="caixa-titulo-sistema">SISTEMA DE CHAMADOS</div>
+
+                        <div class="descricao-sistema">
+                            Bem-vindo ao sistema de atendimento do TI.<br>
+                            Aqui serão encaminhadas as solicitações dos usuários de todos os setores.
+                        </div>
+
+                        <div class="campos-explicacao">
+                            <div class="campo-info">
+                                <strong>Número</strong>
+                                Identificação única do atendimento no padrão SE-CTI.
+                            </div>
+                            <div class="campo-info">
+                                <strong>Solicitante</strong>
+                                Pessoa que relatou o comportamento ou problema.
+                            </div>
+                            <div class="campo-info">
+                                <strong>Setor</strong>
+                                Localidade física ou departamento de origem.
+                            </div>
+                            <div class="campo-info">
+                                <strong>Histórico/Encaminhamento</strong>
+                                Relato detalhado e orientações da supervisão.
+                            </div>
+                        </div>
+
+                        <div class="alerta-vazio">
+                            <p style="color: var(--cor-destaque); font-weight: bold; margin: 0 0 8px 0; font-size: 1.3rem; letter-spacing: 1px;">NENHUM CHAMADO DISPONÍVEL</p>
+                            <p style="font-size: 1.05rem; margin: 0; color: #8da1ad;">Aguarde o recebimento de novas solicitações na barra lateral.</p>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+        </div>
+    </div>
+
+    <!-- 6. MONITOR (CMD INTERATIVO COM AVISO ACL_ON) -->
+    <div class="tela-backdrop" id="tela-backdrop" onclick="fecharTudo()">
+        <div class="cmd-janela" onclick="event.stopPropagation(); focarTela();">
+
+            <div class="cmd-titulo-barra">
+                <div class="cmd-titulo-texto">
+                    <div class="cmd-icone-simulado"></div>
+                    <span>Prompt de Comando - semae.exe [Estação: ATD-07]</span>
+                </div>
+                <div class="cmd-controles-janela">
+                    <span>—</span>
+                    <span>❑</span>
+                    <span class="botao-fechar-cmd" onclick="fecharTela()">✕</span>
+                </div>
+            </div>
+
+            <div class="cmd-corpo" id="terminal-foco">
+                <div class="historico-terminal" id="historico-linhas">
+                    <!-- Linha azul instruindo sobre o comando de acessibilidade -->
+                    <div class="aviso-azul-acl" style="color: #38bdf8; margin-bottom: 12px; font-weight: bold;">Para ativar a acessibilidade utilize o comando ACL_ON no terminal.</div>
+
+                    <div>Microsoft Windows [versão 10.0.19045]
+(c) Microsoft Corporation. Todos os direitos reservados.
+
+=======================================================
+               TERMINAL OPERACIONAL SEMAE
+=======================================================</div>
+                    <div class="mensagem-inativa" style="color: var(--cor-destaque); margin-top: 40px; font-weight: bold;">Nenhum atendimento iniciado. Verifique seus chamados.</div>
+                </div>
+
+                <div class="linha-input" id="area-input">
+                    <span class="prompt-simbolo">C:\SEMAE\ATD-07&gt;</span>
+                    <div class="input-wrapper">
+                        <span id="ghost-text"></span>
+                        <input type="text" id="prompt-input" class="campo-entrada" autocomplete="off">
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- 7. CARREGAMENTO DA IMAGEM E ABERTURA DA CORTINA -->
+    <script>
+        const imgMesa = document.getElementById('imagem-mesa');
+        const nomeSalvoStorage = localStorage.getItem('nomeEstagiario');
+        const temAranha = nomeSalvoStorage ? (localStorage.getItem(nomeSalvoStorage.toUpperCase() + '_conquistaAranha') === 'true') : false;
+
+        const abrirTela = () => {
+            document.body.style.transition = 'opacity 0.4s ease-in-out';
+            document.body.style.opacity = '1';
+        };
+
+        if (imgMesa) {
+            imgMesa.onload = abrirTela;
+            imgMesa.onerror = abrirTela;
+            imgMesa.src = _baseStatic + 'img/' + (temAranha ? 'mesa2.png' : 'mesa.png');
+            if (imgMesa.complete && imgMesa.naturalWidth !== 0) abrirTela();
+            setTimeout(abrirTela, 200);
+        }
+    </script>
+
+    <!-- 8. CARREGAMENTO DOS SCRIPTS NO RODAPÉ -->
+    <script>
+        document.write('<script src="' + _baseStatic + 'js/roteiros/dia1.js"><\/script>');
+        document.write('<script src="' + _baseStatic + 'js/dia1.js"><\/script>');
+        document.write('<script src="' + _baseStatic + 'js/mesa_core.js"><\/script>');
+        document.write('<script src="' + _baseStatic + 'js/ace_mesa.js"><\/script>');
+    </script>
+</body>
+</html>

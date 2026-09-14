@@ -1,22 +1,23 @@
-# -*- coding: utf-8 -*-
+# =========================================================
+# pi2/app.py
+# =========================================================
 
-from flask import Flask, jsonify, request, render_template, redirect, url_for, make_response
-from dotenv import load_dotenv
-from flask_cors import CORS
-import jwt
+# 1. IMPORTAÇÕES E CONFIGURAÇÕES DO SERVIDOR
 import os
+from datetime import datetime, timedelta, UTC
 import psycopg2
 import bcrypt
-from datetime import datetime, timedelta, UTC
+import jwt
+from dotenv import load_dotenv
+from flask import Flask, jsonify, request, render_template, redirect, url_for, make_response
+from flask_cors import CORS
 
-# Carrega as variáveis de ambiente do arquivo .env
 load_dotenv()
 
-app = Flask(__name__)
+app = Flask(__name__, template_folder='.')
 app.json.ensure_ascii = False
 CORS(app)
 
-# --- Configurações das Variáveis de Ambiente ---
 DB_HOST = os.getenv("DB_HOST", "localhost")
 DB_NAME = os.getenv("DB_NAME", "postgres")
 DB_USER = os.getenv("DB_USER", "postgres")
@@ -24,26 +25,24 @@ DB_PASSWORD = os.getenv("DB_PASSWORD")
 SECRET_KEY = os.getenv("SECRET_KEY")
 
 if not SECRET_KEY:
-    raise ValueError("Chave secreta (SECRET_KEY) não definida no arquivo .env.")
+    raise ValueError("SECRET_KEY não configurada no .env")
 if not DB_PASSWORD:
-    raise ValueError("Senha do banco de dados (DB_PASSWORD) não definida no arquivo .env.")
-
-# --- Funções Auxiliares de Segurança e Banco de Dados ---
+    raise ValueError("DB_PASSWORD não configurada no .env")
 
 
+# 2. CONEXÃO COM O BANCO DE DADOS E SEGURANÇA
 def get_db_connection():
     try:
-        # Habilita sslmode='require' para garantir conexão estável e segura com o Supabase
         conn = psycopg2.connect(
             host=DB_HOST,
             database=DB_NAME,
             user=DB_USER,
             password=DB_PASSWORD,
-            sslmode='require'
+            sslmode='require'  # Obrigatório para estabilidade no Supabase
         )
         return conn
     except psycopg2.Error as e:
-        print(f"Erro de conexão com o banco de dados: {e}")
+        print(f"Erro ao conectar com PostgreSQL: {e}")
         return None
 
 def get_token_from_request():
@@ -70,15 +69,27 @@ def validate_admin_token():
         return None
     return payload
 
-# ROTA DE MANUTENÇÃO (Keep-Alive): Mantém o Render acordado de forma automática
+
+# 3. ROTAS DO FRONTEND (PÁGINAS)
+# Keep-Alive que acorda o Render e executa consulta para manter o Supabase ativo
 @app.route('/api/keep-alive', methods=['GET'])
 def keep_alive():
-    return jsonify({
-        "status": "healthy", 
-        "message": "Servidor do Diario de um Estagiario ativo!"
-    }), 200
-
-# --- Rotas para Servir Páginas HTML (Frontend) ---
+    conn = get_db_connection()
+    if conn:
+        try:
+            cur = conn.cursor()
+            cur.execute("SELECT 1;")
+            cur.close()
+            conn.close()
+            return jsonify({
+                "status": "healthy",
+                "database": "connected",
+                "message": "Render e Supabase mantidos ativos com sucesso!"
+            }), 200
+        except Exception as e:
+            if conn: conn.close()
+            return jsonify({"status": "warning", "database_error": str(e)}), 500
+    return jsonify({"status": "healthy", "database": "disconnected"}), 200
 
 @app.route('/')
 def index():
@@ -102,69 +113,54 @@ def admin_page():
         return redirect(url_for('login_page'))
     return render_template('admin.html')
 
-# --- Rotas do Jogo do Estagiário (SEMAE - PI2) ---
-
 @app.route('/pi2')
 def semae_index_page():
     token = request.cookies.get('jwt_token')
     if not token or not validate_token(token):
         return redirect(url_for('login_page'))
-    return render_template('pi2/index.html')
+    return render_template('templates/index.html')
 
 @app.route('/pi2/sala')
 def semae_sala_page():
     token = request.cookies.get('jwt_token')
     if not token or not validate_token(token):
         return redirect(url_for('login_page'))
-    return render_template('pi2/sala.html')
+    return render_template('templates/sala.html')
 
 @app.route('/pi2/mesa')
 def semae_mesa_page():
     token = request.cookies.get('jwt_token')
     if not token or not validate_token(token):
         return redirect(url_for('login_page'))
-    return render_template('pi2/mesa.html')
+    return render_template('templates/mesa.html')
 
+# Redirecionamento de segurança para quem acessar a rota antiga do Dia 1
 @app.route('/pi2/dia1')
 def semae_dia1_page():
-    token = request.cookies.get('jwt_token')
-    if not token or not validate_token(token):
-        return redirect(url_for('login_page'))
-    return render_template('pi2/dia_1.html')
+    return redirect(url_for('semae_mesa_page'))
 
 @app.route('/pi2/ranking')
 def semae_ranking_page():
     token = request.cookies.get('jwt_token')
     if not token or not validate_token(token):
         return redirect(url_for('login_page'))
-    return render_template('pi2/ranking.html')
+    return render_template('templates/ranking.html')
 
 @app.route('/logout')
 def logout():
     response = make_response(redirect(url_for('login_page')))
-    response.set_cookie(
-        'jwt_token',
-        '',
-        expires=0,
-        httponly=True,
-        secure=False, 
-        samesite='Lax',
-        path='/'
-    )
+    response.set_cookie('jwt_token', '', expires=0, httponly=True, secure=False, samesite='Lax', path='/')
     return response
 
-# --- APIs de Controle de Usuários e Inicialização ---
 
+# 4. APIS DE AUTENTICAÇÃO E SUPERVISÃO
 @app.route('/init-db')
 def init_db():
     conn = get_db_connection()
     if not conn:
-        return jsonify({"message": "Erro de conexão com o banco de dados."}), 500
-
+        return jsonify({"message": "Erro de conexão com o banco."}), 500
     try:
         cur = conn.cursor()
-        
-        # Cria a tabela de usuários se não existir
         cur.execute("""
             CREATE TABLE IF NOT EXISTS users (
                 id SERIAL PRIMARY KEY,
@@ -174,8 +170,6 @@ def init_db():
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             );
         """)
-        
-        # Cria a tabela isolada de ranqueamento
         cur.execute("""
             CREATE TABLE IF NOT EXISTS semae_ranking (
                 id SERIAL PRIMARY KEY,
@@ -186,20 +180,16 @@ def init_db():
                 updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             );
         """)
-
-        # ADICIONA A COLUNA DE PROGRESSO SE ELA NÃO EXISTIR (Migração dinâmica)
         cur.execute("""
             ALTER TABLE semae_ranking 
             ADD COLUMN IF NOT EXISTS progresso INTEGER DEFAULT 0;
         """)
-        
         conn.commit()
         cur.close()
         conn.close()
-        return jsonify({"message": "Banco de dados e tabela isolada 'semae_ranking' verificados com sucesso!"}), 200
+        return jsonify({"message": "Tabelas verificadas com sucesso!"}), 200
     except psycopg2.Error as e:
-        print(f"Erro ao inicializar DB: {e}")
-        return jsonify({"message": "Erro ao criar/verificar tabelas no banco de dados."}), 500
+        return jsonify({"message": f"Erro de banco: {e}"}), 500
 
 @app.route('/api/register', methods=['POST'])
 def register_user():
@@ -212,24 +202,21 @@ def register_user():
 
     conn = get_db_connection()
     if not conn:
-        return jsonify({"message": "Erro de conexão com o banco de dados."}), 500
+        return jsonify({"message": "Erro de banco de dados."}), 500
 
     try:
         cur = conn.cursor()
         hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
-
-        # Por padrão, novas contas são criadas como administradoras para este ambiente acadêmico
         cur.execute(
             "INSERT INTO users (username, password_hash, is_admin) VALUES (%s, %s, TRUE)",
             (username, hashed_password)
         )
         conn.commit()
-        return jsonify({"message": "Conta criada com sucesso! Prossiga para o login."}), 201
+        return jsonify({"message": "Conta criada com sucesso!"}), 201
     except psycopg2.errors.UniqueViolation:
-        return jsonify({"message": "Este nome de usuário já está registrado."}), 409
+        return jsonify({"message": "Nome de usuário já cadastrado."}), 409
     except Exception as e:
-        print(f"Erro no cadastro: {e}")
-        return jsonify({"message": "Erro interno ao criar conta."}), 500
+        return jsonify({"message": "Erro ao criar conta."}), 500
     finally:
         if 'cur' in locals() and cur: cur.close()
         if conn: conn.close()
@@ -241,11 +228,11 @@ def api_login_user():
     password = data.get('password')
 
     if not username or not password:
-        return jsonify({"message": "Nome de usuário e senha são obrigatórios."}), 400
+        return jsonify({"message": "Campos obrigatórios ausentes."}), 400
 
     conn = get_db_connection()
     if not conn:
-        return jsonify({"message": "Erro de conexão com o banco de dados."}), 500
+        return jsonify({"message": "Erro de conexão com o banco."}), 500
 
     try:
         cur = conn.cursor()
@@ -257,27 +244,15 @@ def api_login_user():
                 'user_id': user[0],
                 'username': user[1],
                 'is_admin': user[3],
-                'exp': datetime.now(UTC) + timedelta(hours=2) # Sessão de 2 horas de duração
+                'exp': datetime.now(UTC) + timedelta(hours=2)
             }
             token = jwt.encode(payload, SECRET_KEY, algorithm='HS256')
-
-            response_data = jsonify({"message": "Login realizado com sucesso!"})
-            response = make_response(response_data)
-
-            response.set_cookie(
-                'jwt_token',
-                token,
-                httponly=True,
-                secure=False, # Altere para True em produção com HTTPS (Render)
-                samesite='Lax',
-                path='/'
-            )
+            response = make_response(jsonify({"message": "Login autorizado!"}))
+            response.set_cookie('jwt_token', token, httponly=True, secure=False, samesite='Lax', path='/')
             return response
-        else:
-            return jsonify({"message": "Credenciais inválidas."}), 401
+        return jsonify({"message": "Credenciais incorretas."}), 401
     except Exception as e:
-        print(f"Erro no login: {e}")
-        return jsonify({"message": "Erro interno de autenticação."}), 500
+        return jsonify({"message": "Erro no servidor."}), 500
     finally:
         if 'cur' in locals() and cur: cur.close()
         if conn: conn.close()
@@ -287,15 +262,12 @@ def get_current_user():
     token = get_token_from_request()
     payload = validate_token(token)
     if not payload:
-        return jsonify({"message": "Token inválido ou expirado."}), 401
-
+        return jsonify({"message": "Sessão inválida."}), 401
     return jsonify({
         "user_id": payload['user_id'],
         "username": payload['username'],
         "is_admin": payload.get('is_admin', False)
     }), 200
-
-# --- Administração Unificada (Secret Admin / Supervision Dashboard) ---
 
 @app.route('/users', methods=['GET'])
 def get_users():
@@ -304,7 +276,7 @@ def get_users():
 
     conn = get_db_connection()
     if not conn:
-        return jsonify({"message": "Erro de conexão com o banco de dados."}), 500
+        return jsonify({"message": "Erro de banco."}), 500
 
     try:
         cur = conn.cursor()
@@ -315,14 +287,13 @@ def get_users():
             ORDER BY u.created_at DESC
         """)
         users = cur.fetchall()
-
         users_list = []
         for u in users:
             prog = u[8] if u[8] is not None else 0
             prog_texto = "Iniciante"
             if prog == 1: prog_texto = "Explorando Oficina"
             elif prog == 2: prog_texto = "Dia 1 Em Progresso"
-            elif prog == 3: prog_texto = "Dia 1 Concluído"
+            elif prog >= 3: prog_texto = "Dia 1 Concluído"
 
             users_list.append({
                 "id": u[0],
@@ -333,13 +304,11 @@ def get_users():
                 "estrelas": u[5] if u[5] is not None else 0,
                 "conquista_aranha": u[6] if u[6] is not None else False,
                 "updated_at": u[7].strftime("%Y-%m-%d %H:%M:%S") if u[7] else "Sem atividade",
-                "progresso_texto": prog_texto # Texto que o admin exibirá
+                "progresso_texto": prog_texto
             })
-            
         return jsonify(users_list), 200
     except psycopg2.Error as e:
-        print(f"Erro ao listar operadores: {e}")
-        return jsonify({"message": "Ocorreu um erro interno ao listar operadores."}), 500
+        return jsonify({"message": f"Erro ao listar: {e}"}), 500
     finally:
         if 'cur' in locals() and cur: cur.close()
         if conn: conn.close()
@@ -351,20 +320,17 @@ def delete_user(user_id):
 
     conn = get_db_connection()
     if not conn:
-        return jsonify({"message": "Erro de conexão com o banco de dados."}), 500
+        return jsonify({"message": "Erro de banco."}), 500
 
     try:
         cur = conn.cursor()
         cur.execute("DELETE FROM users WHERE id = %s", (user_id,))
-
         if cur.rowcount == 0:
-            return jsonify({"message": "Operador não encontrado."}), 404
-
+            return jsonify({"message": "Não encontrado."}), 404
         conn.commit()
-        return jsonify({"message": f"Operador ID {user_id} removido com sucesso."}), 200
+        return jsonify({"message": f"Usuário {user_id} removido."}), 200
     except psycopg2.Error as e:
-        print(f"Erro ao deletar operador (ID: {user_id}): {e}")
-        return jsonify({"message": "Ocorreu um erro interno ao remover o operador."}), 500
+        return jsonify({"message": f"Erro ao remover: {e}"}), 500
     finally:
         if 'cur' in locals() and cur: cur.close()
         if conn: conn.close()
@@ -374,42 +340,36 @@ def api_server_status():
     token = get_token_from_request()
     if not validate_token(token):
         return jsonify({"message": "Não autorizado"}), 401
-    
-    # Retorna o status de conexão baseando-se na disponibilidade do banco de dados
     conn = get_db_connection()
     if conn:
         conn.close()
         return jsonify({"storage_status": "green"}), 200
-    else:
-        return jsonify({"storage_status": "red"}), 200
+    return jsonify({"storage_status": "red"}), 200
 
-# =====================================================================
-# ROTAS DE API DA TABELA DE RANKING (SEMAE_RANKING)
-# =====================================================================
 
+# 5. ROTAS DE API DO RANKING E PROGRESSO
 @app.route('/api/save-score', methods=['POST'])
 def save_score():
     token = get_token_from_request()
     payload = validate_token(token)
     if not payload:
         return jsonify({"message": "Não autorizado."}), 401
-        
+
     data = request.get_json() or {}
-    estrelas = data.get('estrelas', 0)                  # Pontuação real (★)
-    progresso = data.get('progresso', 0)                # Estado do fluxo (0, 1, 2 ou 3)
+    estrelas = data.get('estrelas', 0)
+    progresso = data.get('progresso', 0)
     conquista_aranha = data.get('conquista_aranha', False)
     username_jogo = data.get('username_jogo')
-    
+
     user_id = payload['user_id']
     username = username_jogo if username_jogo else payload['username']
-    
+
     conn = get_db_connection()
     if not conn:
-        return jsonify({"message": "Erro de conexão com o banco de dados."}), 500
-        
+        return jsonify({"message": "Erro de conexão com o banco."}), 500
+
     try:
         cur = conn.cursor()
-        # Faz o UPSERT garantindo o progresso e as estrelas de forma correta
         cur.execute("""
             INSERT INTO semae_ranking (user_id, username, estrelas, progresso, conquista_aranha)
             VALUES (%s, %s, %s, %s, %s)
@@ -421,28 +381,25 @@ def save_score():
                 conquista_aranha = semae_ranking.conquista_aranha OR EXCLUDED.conquista_aranha,
                 updated_at = CURRENT_TIMESTAMP
         """, (user_id, username, estrelas, progresso, conquista_aranha))
-        
         conn.commit()
         cur.close()
         conn.close()
-        return jsonify({"message": "Pontuação atualizada com sucesso!"}), 200
+        return jsonify({"message": "Pontuação salva com sucesso!"}), 200
     except Exception as e:
-        print(f"Erro ao salvar pontuação: {e}")
-        return jsonify({"message": "Erro interno ao atualizar pontuação."}), 500
+        return jsonify({"message": "Erro ao atualizar pontuação."}), 500
 
 @app.route('/api/get-ranking', methods=['GET'])
 def get_ranking():
     token = get_token_from_request()
     if not validate_token(token):
         return jsonify({"message": "Não autorizado."}), 401
-        
+
     conn = get_db_connection()
     if not conn:
-        return jsonify({"message": "Erro de conexão com o banco de dados."}), 500
-        
+        return jsonify({"message": "Erro de conexão."}), 500
+
     try:
         cur = conn.cursor()
-        # Recupera as pontuações ativas ordenadas por Estrelas (DESC), conquista (DESC) e tempo (DESC)
         cur.execute("""
             SELECT id, username, estrelas, conquista_aranha 
             FROM semae_ranking 
@@ -453,41 +410,36 @@ def get_ranking():
         users = cur.fetchall()
         cur.close()
         conn.close()
-        
-        ranking_list = []
-        for u in users:
-            ranking_list.append({
-                "id": u[0],
-                "username": u[1],
-                "estrelas": u[2],
-                "conquista_aranha": u[3]
-            })
-        
+
+        ranking_list = [{
+            "id": u[0],
+            "username": u[1],
+            "estrelas": u[2],
+            "conquista_aranha": u[3]
+        } for u in users]
         return jsonify(ranking_list), 200
     except Exception as e:
-        print(f"Erro ao carregar ranking: {e}")
-        return jsonify({"message": "Erro interno ao carregar ranking."}), 500
+        return jsonify({"message": "Erro ao carregar ranking."}), 500
 
-# API para buscar o progresso do próprio usuário logado (Usada para saltar introdução)
 @app.route('/api/my-progress', methods=['GET'])
 def get_my_progress():
     token = get_token_from_request()
     payload = validate_token(token)
     if not payload:
         return jsonify({"message": "Não autorizado."}), 401
-        
+
     user_id = payload['user_id']
     conn = get_db_connection()
     if not conn:
-        return jsonify({"message": "Erro de conexão com o banco de dados."}), 500
-        
+        return jsonify({"message": "Erro de conexão."}), 500
+
     try:
         cur = conn.cursor()
         cur.execute("SELECT username, estrelas, conquista_aranha, progresso FROM semae_ranking WHERE user_id = %s", (user_id,))
         res = cur.fetchone()
         cur.close()
         conn.close()
-        
+
         if res:
             return jsonify({
                 "username_jogo": res[0],
@@ -495,17 +447,14 @@ def get_my_progress():
                 "conquista_aranha": res[2],
                 "progresso": res[3] if res[3] is not None else 0
             }), 200
-        else:
-            return jsonify({
-                "username_jogo": "",
-                "estrelas": 0,
-                "conquista_aranha": False,
-                "progresso": 0
-            }), 200
+        return jsonify({
+            "username_jogo": "",
+            "estrelas": 0,
+            "conquista_aranha": False,
+            "progresso": 0
+        }), 200
     except Exception as e:
-        print(f"Erro ao buscar progresso pessoal: {e}")
-        return jsonify({"message": "Erro interno de banco."}), 500
+        return jsonify({"message": "Erro ao buscar progresso."}), 500
 
 if __name__ == '__main__':
-    # Habilita a execução local na porta 5000
     app.run(debug=True, host='0.0.0.0', port=5000)

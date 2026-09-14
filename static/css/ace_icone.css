@@ -1,0 +1,227 @@
+/* ========================================================= */
+/* static/css/ace_icone.css                                  */
+/* ========================================================= */
+
+/* 1. POSICIONAMENTO E CONTAINER DO WIDGET ♿ */
+.widget-acessibilidade {
+    position: absolute;
+    top: calc(50% - 122px);
+    left: calc(50% - 270px);
+    transform: translateX(-50%);
+    z-index: 99999;
+    user-select: none;
+    width: max-content;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.5s ease-in-out;
+}
+
+.caixa-gatilho-acessibilidade {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    cursor: pointer;
+    outline: none;
+}
+
+.caixa-gatilho-acessibilidade:focus .btn-icone-grande,
+.caixa-gatilho-acessibilidade.foco-pagina .btn-icone-grande {
+    outline: 2px solid #FF9F1C;
+    outline-offset: 3px;
+}
+
+/* 2. BOTÃO ÍCONE CIANO ORIGINAL */
+.btn-icone-grande {
+    width: 68px;
+    height: 68px;
+    background: #030a0e;
+    border: 2px solid #5FDCF2;
+    border-radius: 12px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 2.6rem;
+    line-height: 1;
+    color: #5FDCF2;
+    box-sizing: border-box;
+    transition: all 0.25s ease-in-out;
+    pointer-events: none;
+    box-shadow: none !important;
+}
+
+/* Estado ativo (verde quando algum recurso estiver ligado) */
+.caixa-gatilho-acessibilidade.ativa .btn-icone-grande {
+    animation: none;
+    border-color: #45CF8A !important;
+    color: #45CF8A !important;
+    background: #061710;
+    box-shadow: none !important;
+}
+
+.bloco-mensagens {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    pointer-events: none;
+}
+
+.msg-linha1 {
+    font-size: 0.68rem;
+    color: #5FDCF2;
+    font-weight: bold;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+}
+
+.msg-linha2 {
+    font-size: 0.72rem;
+    color: #FF9F1C;
+    font-weight: bold;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+}
+
+/* 3. PAINEL DE OPÇÕES (GAVETA DE ACESSIBILIDADE) */
+.painel-gaveta-opcoes {
+    display: none;
+    position: fixed !important;
+    top: 50% !important;
+    left: 50% !important;
+    transform: translate(-50%, -50%) !important;
+    width: 650px !important;
+    max-width: 650px !important;
+    height: 280px !important;
+    min-height: 280px !important;
+    padding: 20px 30px 18px 30px !important;
+    box-sizing: border-box !important;
+    background-color: #051520 !important;
+    border: 2px solid #5FDCF2 !important;
+    border-radius: 8px !important;
+    box-shadow: 0 10px 35px rgba(0, 0, 0, 0.95) !important;
+    z-index: 100002 !important;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.painel-gaveta-opcoes.aberto {
+    display: flex;
+    animation: fadeSobrepor 0.15s ease-in-out forwards;
+}
+
+@keyframes fadeSobrepor {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.painel-cabecalho {
+    font-size: 1.1rem;
+    font-weight: bold;
+    color: #FF9F1C;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    border-bottom: 1px solid #1e3540;
+    padding-bottom: 8px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.btn-fechar-painel {
+    font-size: 0.8rem;
+    color: #8da1ad;
+    cursor: pointer;
+    transition: color 0.15s;
+    font-family: inherit;
+}
+
+.btn-fechar-painel:hover {
+    color: #ff5f56;
+}
+
+.painel-corpo-opcoes {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin: 8px 0;
+}
+
+.item-opcao-acessibilidade {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #091720;
+    border: 1px solid #1e3540;
+    padding: 9px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.15s, border-color 0.15s;
+    outline: none;
+    box-shadow: none !important;
+}
+
+.item-opcao-acessibilidade:hover,
+.item-opcao-acessibilidade:focus {
+    border-color: #FF9F1C;
+    background: #112838;
+}
+
+.item-info {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 1rem;
+    font-weight: bold;
+    color: #ffffff;
+}
+
+.badge-status {
+    font-size: 0.8rem;
+    font-weight: bold;
+    padding: 3px 10px;
+    border-radius: 4px;
+    border: 1px solid #444;
+    color: #777;
+    background: #000;
+}
+
+.badge-status.ativo {
+    color: #45CF8A;
+    border-color: #45CF8A;
+    background: rgba(69, 207, 138, 0.2);
+}
+
+.painel-rodape-dica {
+    text-align: center;
+    font-size: 0.78rem;
+    color: #8da1ad;
+    letter-spacing: 0.5px;
+}
+
+/* 4. DESTAQUES WCAG E FOCOS DE TECLADO */
+.foco-pagina {
+    outline: 2px solid #FF9F1C !important;
+    outline-offset: 3px !important;
+}
+
+body.teclado-ativo *:focus {
+    outline: 2px solid #FF9F1C !important;
+    outline-offset: 3px !important;
+}
+
+.tag-acessivel {
+    display: none;
+}
+
+body.icones-ativos .tag-acessivel {
+    display: inline-block;
+    background: #FF9F1C;
+    color: #000;
+    font-size: 0.65rem;
+    font-weight: bold;
+    padding: 1px 5px;
+    border-radius: 2px;
+    margin-left: 6px;
+}

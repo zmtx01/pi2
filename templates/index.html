@@ -1,34 +1,43 @@
+<!-- ========================================================= -->
+<!-- pi2/templates/index.html                                  -->
+<!-- ========================================================= -->
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
+    <!-- 1. METADADOS E CARREGAMENTO HÍBRIDO DO CSS -->
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Diário de um Estagiário - CTI/SEMAE</title>
+
+    <script>
+        const _baseStatic = window.location.protocol === 'file:' ? '../static/' : '/static/';
+        document.write('<link rel="stylesheet" href="' + _baseStatic + 'css/ace_icone.css">');
+    </script>
+
+    <!-- 2. ESTILOS VISUAIS DA TELA -->
     <style>
-        /* Paleta de cores baseada nas especificações técnicas do SEMAE */
         :root {
-            --cor-fundo: #000000;      /* Fundo preto puro solicitado */
-            --cor-texto: #5FDCF2;      /* Ciano retrô "água clara" */
-            --cor-destaque: #FF9F1C;   /* Laranja de alerta/destaque */
-            --cor-sucesso: #45CF8A;    /* Verde para conexão estável */
+            --cor-fundo: #000000;
+            --cor-texto: #5FDCF2;
+            --cor-destaque: #FF9F1C;
+            --cor-sucesso: #45CF8A;
         }
 
-        /* Flexbox configurado para manter TUDO 100% centralizado */
         body {
             background-color: var(--cor-fundo);
             color: var(--cor-texto);
             font-family: 'Consolas', 'SF Mono', 'DejaVu Sans Mono', monospace;
             display: flex;
-            justify-content: center; /* Trava o eixo horizontal no centro */
-            align-items: center;     /* Trava o eixo vertical no centro */
+            justify-content: center;
+            align-items: center;
             height: 100vh;
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-            position: relative; /* Permite que o título e o rodapé flutuem sem empurrar a caixa */
+            position: relative;
+            user-select: none;
         }
 
-        /* 2. Caixa do Terminal (Agora cravada no centro e do mesmo tamanho) */
         .terminal-box {
             width: 100%;
             max-width: 650px;
@@ -40,29 +49,14 @@
             box-shadow: 0 0 25px rgba(95, 220, 242, 0.15);
             box-sizing: border-box;
             text-align: center;
-            
-            /* ADICIONE ESTAS DUAS LINHAS: */
             opacity: 0;
             transition: opacity 0.5s ease-in-out;
         }
 
-        /* ADICIONE ESTA NOVA CLASSE LOGO ABAIXO: */
-        .terminal-box.visivel {
-            opacity: 1;
-        }
+        .terminal-box.visivel { opacity: 1; }
+        .terminal-line { margin: 12px 0; white-space: pre-wrap; line-height: 1.6; outline: none; }
+        .sub-titulo { font-size: 1.1rem; margin-bottom: 25px; outline: none; }
 
-        .terminal-line {
-            margin: 12px 0;
-            white-space: pre-wrap;
-            line-height: 1.6;
-        }
-
-        .sub-titulo {
-            font-size: 1.1rem;
-            margin-bottom: 25px;
-        }
-
-        /* Área de entrada de dados */
         .input-box {
             display: flex;
             align-items: center;
@@ -70,10 +64,7 @@
             gap: 10px;
             margin: 15px 0;
         }
-
-        .input-box span {
-            user-select: none;
-        }
+        .input-box span { user-select: none; }
 
         input[type="text"] {
             background: transparent;
@@ -90,145 +81,167 @@
 
         button {
             background: transparent;
-            border: 1px solid transparent;
+            border: none;
             color: var(--cor-sucesso);
             font-family: inherit;
             font-size: 1.1rem;
             cursor: pointer;
-            padding: 10px 15px;
+            padding: 8px 15px;
             margin-top: 15px;
-            transition: background 0.3s, border-color 0.3s;
-        }
-
-        button:hover, button:focus {
-            background: rgba(69, 207, 138, 0.1);
-            border-color: var(--cor-sucesso);
+            border-radius: 4px;
             outline: none;
+            transition: color 0.2s;
         }
 
-        /* 3. Rodapé posicionado de forma absoluta na parte de baixo */
+        button:hover {
+            color: #ffffff;
+        }
+
+        body.teclado-ativo button,
+        button:focus {
+            border: 1px solid var(--cor-sucesso);
+            background: rgba(69, 207, 138, 0.1);
+        }
+
+        .btn-iniciar-turno {
+            background: transparent !important;
+            border: none !important;
+            outline: none !important;
+            box-shadow: none !important;
+            color: var(--cor-sucesso);
+            font-family: inherit;
+            font-size: 1rem;
+            cursor: pointer;
+            border-radius: 4px;
+            margin-top: 25px;
+            transition: color 0.2s;
+            white-space: nowrap !important;
+            padding: 8px 0 !important;
+        }
+
+        .btn-iniciar-turno:hover {
+            color: #ffffff;
+        }
+
+        body.teclado-ativo .btn-iniciar-turno,
+        body.teclado-ativo .btn-iniciar-turno:focus {
+            border: 1px solid var(--cor-sucesso) !important;
+            background: rgba(69, 207, 138, 0.1) !important;
+            outline: 2px solid #FF9F1C !important;
+            outline-offset: 3px !important;
+        }
+
         .footer-ascii {
             position: absolute;
-            bottom: 30px; /* Distância do fundo da tela */
+            bottom: 30px;
             text-align: center;
             font-size: 0.85rem;
             letter-spacing: 1px;
             width: 100%;
         }
 
-        #progress-bar {
-            color: var(--cor-destaque);
-            margin-top: 5px;
-            font-weight: bold;
-        }
+        #progress-bar { color: var(--cor-destaque); margin-top: 5px; font-weight: bold; }
+        .text-left { text-align: left; }
 
-        .text-left {
-            text-align: left;
-        }
-
-        /* ========================================================= */
-        /* AQUI VOCÊ ALTERA O TAMANHO E ALTURA DO TÍTULO             */
-        /* ========================================================= */
-        
         .header-externo {
-            position: absolute; /* Impede que o título empurre a caixa para baixo */
+            position: absolute;
             width: 100%;
             text-align: center;
-            
-            /* ALTERE A ALTURA AQUI (Distância do topo) */
-            /* Aumente o número para descer (ex: 80px), diminua para subir (ex: 20px) */
-            top: 12vh; 
-
+            top: 12vh;
+            outline: none;
         }
-        
-        
+
         .titulo-jogo {
             color: var(--cor-destaque);
             font-weight: bold;
             letter-spacing: 1px;
             margin: 30px 0;
-            
-            /* ALTERE O TAMANHO DO TÍTULO AQUI */
-            font-size: 4.3rem; 
+            font-size: 4.3rem;
+            outline: none;
         }
-        /* ========================================================= */
-
-        /* Estilos para a Tela 3 (Imagem Centralizada) */
-        #screen-3 {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100vw;
-            height: 100vh;
-            background-color: #000000;
-            display: none; /* Inicia oculta */
-            justify-content: center;
-            align-items: center;
-            z-index: 9999; /* Fica acima de tudo */
-        }sa
-
-        .imagem-centralizada {
-            max-width: 50%;
-            max-height: 50%;
-            object-fit: contain;
-            border: 2px solid var(--cor-texto); /* Mantém a borda ciano para combinar com o tema */
-            border-radius: 4px;
-        }
-
     </style>
 </head>
 <body>
 
-    <!-- Cabeçalho Externo (Flutuando no topo, altura ajustável no CSS) -->
-   <div class="header-externo" id="cabecalho-principal">
+    <!-- 3. CABEÇALHO DO JOGO -->
+    <div class="header-externo" id="cabecalho-principal">
         <div id="div-sup"></div>
-        <div class="titulo-jogo" id="titulo-texto"></div>
+        <div class="titulo-jogo" id="titulo-texto" tabindex="1" data-fala="Título: Diário de um Estagiário."></div>
         <div id="div-inf"></div>
     </div>
 
-    <!-- Terminal Box Principal (Sempre no centro exato da tela) -->
+    <!-- 4. TERMINAL CENTRAL -->
     <div class="terminal-box" id="terminal">
-        <!-- Tela 1: Carrega instantaneamente junto com o retângulo -->
         <div id="screen-1">
-            <div class="terminal-line sub-titulo" id="subtitulo-texto">PRIMEIRO DIA</div>
-            <div class="terminal-line" id="label-nome">Digite seu nome:</div>
-            
+            <div class="terminal-line sub-titulo" id="subtitulo-texto" tabindex="2" data-fala="Seção: Primeiro Dia de Trabalho.">PRIMEIRO DIA <span class="tag-acessivel">[FASE INICIAL]</span></div>
+            <div class="terminal-line" id="label-nome" tabindex="3" data-fala="Instrução: Digite seu nome:">Digite seu nome:</div>
+
             <div id="form-area">
                 <div class="input-box">
                     <span>[</span>
-                    <input type="text" id="username" autocomplete="off" maxlength="20" autofocus />
+                    <input type="text" id="username" autocomplete="off" maxlength="20" tabindex="4" data-fala="Campo para digitar o seu nome." />
                     <span>]</span>
                 </div>
                 <div>
-                    <button id="btn-entrar">[ ENTRAR ]</button>
+                    <button id="btn-entrar" tabindex="5" data-fala="Botão Entrar. Pressione enter para começar o turno.">[ ENTRAR ] <span class="tag-acessivel">[CONFIRMAR]</span></button>
                 </div>
             </div>
         </div>
 
-        <!-- Tela 2: Perfil do estagiário (Nasce exatamente no mesmo lugar da tela 1) -->
         <div id="screen-2" style="display: none;"></div>
     </div>
 
-    <!-- Barra de Progresso ASCII no Fundo da Tela -->
+    <!-- 5. PAINEL E WIDGET DE ACESSIBILIDADE (COM TRAVA DISPLAY NONE INLINE) -->
+    <div class="painel-gaveta-opcoes" id="painel-opcoes" style="display: none;">
+        <div class="painel-cabecalho">
+            <span>RECURSOS DE ACESSIBILIDADE</span>
+            <span class="btn-fechar-painel" onclick="alternarPainelA11y(false)">[ESC] FECHAR</span>
+        </div>
+
+        <div class="painel-corpo-opcoes">
+            <div class="item-opcao-acessibilidade" id="item-voz" tabindex="7" onclick="alternarOpcaoA11y('voz')">
+                <div class="item-info"><span>🔊</span><span>Leitura por Voz</span></div>
+                <div class="badge-status" id="badge-voz">DESLIGADO</div>
+            </div>
+            <div class="item-opcao-acessibilidade" id="item-teclado" tabindex="8" onclick="alternarOpcaoA11y('teclado')">
+                <div class="item-info"><span>⌨️</span><span>Navegação Teclado</span></div>
+                <div class="badge-status" id="badge-teclado">DESLIGADO</div>
+            </div>
+            <div class="item-opcao-acessibilidade" id="item-icones" tabindex="9" onclick="alternarOpcaoA11y('icones')">
+                <div class="item-info"><span>🔤</span><span>Ícones & Destaques</span></div>
+                <div class="badge-status" id="badge-icones">DESLIGADO</div>
+            </div>
+        </div>
+
+        <div class="painel-rodape-dica">
+            [ Pressione ESC para retornar ao login ]
+        </div>
+    </div>
+
+    <div class="widget-acessibilidade" id="widget-acessibilidade">
+        <div class="caixa-gatilho-acessibilidade" id="gatilho-acessibilidade" tabindex="6" role="button" data-fala="Menu de Acessibilidade. Pressione Alt mais A para abrir.">
+            <div class="btn-icone-grande" id="container-icone">♿</div>
+            <div class="bloco-mensagens">
+                <span class="msg-linha1">ACESSIBILIDADE</span>
+                <span class="msg-linha2">[ALT + A]</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- 6. BARRA ASCI NO RODAPÉ -->
     <div class="footer-ascii" id="conexao-ascii">
         <div id="progress-status">CONECTANDO AO HOST...</div>
         <div id="progress-bar">[░░░░░░░░░░] 0%</div>
     </div>
 
-    <!-- Nova Tela 3 para carregar a imagem do escritório -->
-    <div id="screen-3">
-        <img id="imagem-transicao" alt="Sala do Escritório" class="imagem-centralizada" />
-    </div>
-
+    <!-- 7. LÓGICA DO JOGO -->
     <script>
-
         if (window.location.protocol !== 'file:') {
             if (!sessionStorage.getItem('aba_ativa')) {
                 window.location.href = '/logout';
             }
         }
 
-        
         const sleep = ms => new Promise(r => setTimeout(r, ms));
         let skipTyping = false;
 
@@ -307,86 +320,73 @@
         }
 
         async function iniciarPagina1() {
-
-            // TRUQUE DE PRÉ-CARREGAMENTO INVISÍVEL
+            const baseImg = window.location.protocol === 'file:' ? '../static/img/' : '/static/img/';
             const imgsParaBaixar = ['sala.png', 'mesa.png', 'mesa2.png'];
-            let pasta = window.location.protocol === 'file:' ? '' : '/static/pi2/';
             imgsParaBaixar.forEach(arq => {
                 const imgOculta = new Image();
-                imgOculta.src = pasta + arq;
+                imgOculta.src = baseImg + arq;
             });
 
-
-            // 1. SEGURANÇA: Desloga se fechar a guia ou abrir direto em uma nova aba
             if (window.location.protocol !== 'file:') {
                 if (!sessionStorage.getItem('aba_ativa')) {
                     window.location.href = '/logout';
-                    return; // Interrompe a execução inicial
+                    return;
                 }
             }
 
-            // 2. INTELIGÊNCIA DE PULO: Pula a introdução e o formulário se já tiver progresso no banco
             if (window.location.protocol !== 'file:') {
                 try {
                     const response = await fetch('/api/my-progress');
                     if (response.ok) {
                         const data = await response.json();
-                        
-                        if (data.progresso === 1) {
-                            // Estado 1 (Exploração): Manda para o prologue da mesa
+                        if (data.progresso >= 1) {
                             localStorage.setItem('nomeEstagiario', data.username_jogo);
                             window.location.href = "/pi2/mesa";
-                            return;
-                        } else if (data.progresso >= 2) {
-                            // Estado 2 ou 3 (Em progresso / Concluído): Manda direto para o terminal de desafios
-                            localStorage.setItem('nomeEstagiario', data.username_jogo);
-                            window.location.href = "/pi2/dia1";
                             return;
                         }
                     }
                 } catch (e) {
-                    console.error("Erro ao verificar progresso para pulo de intro:", e);
+                    console.error("Erro ao verificar progresso:", e);
                 }
             }
 
-            // 3. FLUXO TRADICIONAL (Apenas para novos jogadores / estrelas < 2)
             skipTyping = false;
 
             const divSup = document.getElementById('div-sup');
             const tituloTexto = document.getElementById('titulo-texto');
             const divInf = document.getElementById('div-inf');
 
-            // Garante que os elementos comecem limpos para a animação
             divSup.innerHTML = '';
             tituloTexto.innerHTML = '';
             divInf.innerHTML = '';
 
-            // Inicializa a barra de carregamento simultaneamente
             rodarBarraAscii();
 
-            // Digita a linha superior (divisor) de forma rápida (velocidade 5)
             await typeText(divSup, "==================================================================================================", 5);
             if (!skipTyping) await sleep(150);
 
-            // Digita o título principal (velocidade 20)
             await typeText(tituloTexto, "DIÁRIO DE UM ESTAGIÁRIO", 20);
             if (!skipTyping) await sleep(150);
 
-            // Digita a linha inferior (divisor) de forma rápida (velocidade 5)
             await typeText(divInf, "==================================================================================================", 5);
             if (!skipTyping) await sleep(150);
 
             const terminal = document.getElementById('terminal');
             terminal.classList.add('visivel');
 
+            const widget = document.getElementById('widget-acessibilidade');
+            if (widget) {
+                widget.style.opacity = '1';
+                widget.style.pointerEvents = 'auto';
+            }
+
             const input = document.getElementById('username');
             const btn = document.getElementById('btn-entrar');
-
-            if (input) input.focus();
 
             const enviarFormulario = () => {
                 const name = input.value.trim();
                 if (name) {
+                    if ('speechSynthesis' in window) window.speechSynthesis.cancel();
                     carregarTela2(name);
                 } else {
                     input.style.borderColor = '#E04A5F';
@@ -400,27 +400,27 @@
             });
         }
 
-        // Transição para Tela 2
         async function carregarTela2(name) {
             localStorage.setItem('nomeEstagiario', name);
+            if ('speechSynthesis' in window) window.speechSynthesis.cancel();
 
-            // GATILHO SILENCIOSO: Salva imediatamente no banco que o usuário registrou o nome (Estado 1)
+            const widget = document.getElementById('widget-acessibilidade');
+            if (widget) widget.style.display = 'none';
+
             if (window.location.protocol !== 'file:') {
                 try {
                     await fetch('/api/save-score', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ 
-                            progresso: 1, estrelas: 0, 
+                            progresso: 1, 
+                            estrelas: 0, 
                             username_jogo: name 
                         })
                     });
-                } catch (e) {
-                    console.error("Falha ao salvar progresso inicial (Estado 1):", e);
-                }
+                } catch (e) {}
             }
 
-            // Esconde o título e o rodapé. Como estão "absolute", a caixa principal NÃO sai do lugar!
             document.getElementById('cabecalho-principal').style.display = 'none';
             document.getElementById('conexao-ascii').style.display = 'none';
             
@@ -433,7 +433,10 @@
 
             skipTyping = false; 
 
-            // Carregamento da Tela 2
+            if (typeof falarTexto === 'function') {
+                falarTexto(`Carregando perfil. Estagiário: ${name}. Setor: Tecnologia da Informação. Cargo: Estagiário de T.I. Status: Novo Estagiário.`, 'teclado');
+            }
+
             await printLineSlow(screen2, "CARREGANDO PERFIL...", 25);
             await printEstagiarioLine(screen2, name, 25);
             await printLineSlow(screen2, "Setor: Tecnologia da Informação", 25);
@@ -441,32 +444,34 @@
             await printLineSlow(screen2, "Status:", 25);
             await printLineSlow(screen2, "NOVO ESTAGIÁRIO", 25);
 
-            const finalPrompt = document.createElement('div');
-            finalPrompt.className = 'terminal-line text-left';
-            finalPrompt.style.color = 'var(--cor-sucesso)';
-            finalPrompt.style.marginTop = '25px';
-            screen2.appendChild(finalPrompt);
-            await typeText(finalPrompt, "[ Pressione qualquer tecla ou clique para iniciar o seu turno... ]", 15);
+            const btnTurno = document.createElement('button');
+            btnTurno.id = 'btn-iniciar-turno';
+            btnTurno.className = 'btn-iniciar-turno';
+            btnTurno.tabIndex = 1;
+            btnTurno.setAttribute('data-fala', 'Botão: Pressione qualquer tecla ou clique para iniciar o seu turno...');
+            btnTurno.textContent = '[ Pressione qualquer tecla ou clique para iniciar o seu turno... ]';
+            screen2.appendChild(btnTurno);
+            btnTurno.focus();
 
-            // Função de transição unificada (teclado ou clique)
-            function avancar() {
-                document.removeEventListener('keydown', avancar);
-                document.removeEventListener('click', avancar);
-                
-                // Chama a transição de escurecer a tela (que agora faz o redirecionamento sozinha)
+            function avancar(e) {
+                if (e) e.preventDefault();
+                if ('speechSynthesis' in window) window.speechSynthesis.cancel();
+                document.removeEventListener('keydown', teclaAvancar);
+                btnTurno.removeEventListener('click', avancar);
                 carregarTela3(); 
             }
 
-            // Aguarda um pequeno intervalo para evitar que o clique do ENTRAR passe direto
+            function teclaAvancar(e) {
+                avancar(e);
+            }
+
+            btnTurno.addEventListener('click', avancar);
             setTimeout(() => {
-                document.addEventListener('keydown', avancar);
-                document.addEventListener('click', avancar);
+                document.addEventListener('keydown', teclaAvancar);
             }, 300);
         }
 
-        // Função de transição para a Tela 3
         function carregarTela3() {
-            // Escurece o index suavemente e faz o redirecionamento limpo
             document.body.style.transition = 'opacity 0.5s ease-in-out';
             document.body.style.opacity = '0';
             
@@ -476,10 +481,15 @@
                 } else {
                     window.location.href = "/pi2/sala"; 
                 }
-            }, 500); // Espera 500ms para a tela ficar toda preta e muda de página
+            }, 500);
         }
 
         window.onload = iniciarPagina1;
+    </script>
+
+    <!-- 8. CARREGAMENTO HÍBRIDO DO JS DE ACESSIBILIDADE -->
+    <script>
+        document.write('<script src="' + _baseStatic + 'js/ace_index.js"><\/script>');
     </script>
 </body>
 </html>

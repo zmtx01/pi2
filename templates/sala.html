@@ -1,0 +1,262 @@
+<!-- ========================================================= -->
+<!-- pi2/templates/sala.html                                   -->
+<!-- ========================================================= -->
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <!-- 1. METADADOS E CARREGAMENTO HÍBRIDO DO CSS -->
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Diário de um Estagiário - Escritório</title>
+
+    <script>
+        const _baseStatic = window.location.protocol === 'file:' ? '../static/' : '/static/';
+        document.write('<link rel="stylesheet" href="' + _baseStatic + 'css/ace_icone.css">');
+    </script>
+
+    <!-- 2. ESTILOS VISUAIS E COORDENADAS DA SALA -->
+    <style>
+        body {
+            opacity: 0;
+            background-color: #000000;
+            margin: 0;
+            padding: 20px;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            box-sizing: border-box;
+            font-family: 'Consolas', 'SF Mono', 'DejaVu Sans Mono', monospace;
+            color: #5FDCF2;
+            user-select: none;
+        }
+
+        .dia-titulo {
+            font-size: 3.5rem;
+            font-weight: bold;
+            color: #5FDCF2; 
+            margin-top: 80px;   
+            margin-bottom: 30px; 
+            text-align: center;
+            position: relative; 
+            top: -130px;
+            outline: none;
+        }
+
+        .sala-container {
+            position: relative;
+            display: inline-block; 
+            max-width: 100%;
+            top: -130px; 
+        }
+
+        .imagem-centralizada {
+            display: block;
+            width: 100%;
+            max-width: 900px;
+            aspect-ratio: 16 / 9;
+            object-fit: contain;
+            border: 2px solid var(--cor-texto, #5FDCF2);
+            border-radius: 4px;
+            background-color: #050a0d;
+        }
+
+        /* HITBOX MESA: LIMPA E INVISÍVEL POR PADRÃO */
+        #hitbox-mesa {
+            position: absolute;
+            cursor: pointer;
+            transition: background-color 0.2s, outline 0.2s, border-color 0.2s;
+            top: 51%;     
+            left: 36%;    
+            width: 28%;   
+            height: 45%;  
+            outline: none;
+            
+            border: 2px solid transparent; /* Invisível por padrão */
+            border-radius: 6px;
+            background-color: transparent;
+
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        #hitbox-mesa .tag-hitbox {
+            display: none;
+            background: rgba(0, 0, 0, 0.75);
+            border: 1px solid #ffffff;
+            color: #ffffff;
+            font-size: 0.9rem;
+            font-weight: bold;
+            letter-spacing: 1.5px;
+            padding: 6px 14px;
+            border-radius: 4px;
+            pointer-events: none;
+            transition: color 0.2s, border-color 0.2s, background-color 0.2s;
+        }
+
+        /* Revela com borda e etiqueta apenas se a acessibilidade visual for ativada */
+        body.icones-ativos #hitbox-mesa,
+        body.teclado-ativo #hitbox-mesa {
+            border-color: #ffffff;
+            background-color: rgba(255, 255, 255, 0.08);
+        }
+
+        body.icones-ativos #hitbox-mesa .tag-hitbox,
+        body.teclado-ativo #hitbox-mesa .tag-hitbox {
+            display: inline-block;
+        }
+
+        /* Hover do mouse: SÓ revela borda verde e etiqueta se acessibilidade estiver ligada */
+        body.icones-ativos #hitbox-mesa:hover,
+        body.icones-ativos #hitbox-mesa:active,
+        body.teclado-ativo #hitbox-mesa:hover,
+        body.teclado-ativo #hitbox-mesa:active {
+            background-color: rgba(69, 207, 138, 0.25) !important;
+            border-color: #45CF8A !important;
+        }
+
+        body.icones-ativos #hitbox-mesa:hover .tag-hitbox,
+        body.icones-ativos #hitbox-mesa:active .tag-hitbox,
+        body.teclado-ativo #hitbox-mesa:hover .tag-hitbox,
+        body.teclado-ativo #hitbox-mesa:active .tag-hitbox {
+            display: inline-block;
+            background: #03140a;
+            color: #45CF8A;
+            border-color: #45CF8A;
+        }
+
+        /* FOCO WCAG: Borda Laranja SÓ aparece se o modo teclado estiver ativo */
+        body.teclado-ativo #hitbox-mesa:focus,
+        body.teclado-ativo #hitbox-mesa.foco-pagina,
+        body.icones-ativos #hitbox-mesa.foco-pagina {
+            outline: 3px solid #FF9F1C !important;
+            outline-offset: 4px !important;
+            border-color: #FF9F1C !important;
+            background-color: rgba(255, 159, 28, 0.25) !important;
+        }
+
+        body.teclado-ativo #hitbox-mesa:focus .tag-hitbox,
+        body.teclado-ativo #hitbox-mesa.foco-pagina .tag-hitbox,
+        body.icones-ativos #hitbox-mesa.foco-pagina .tag-hitbox {
+            display: inline-block;
+            border-color: #FF9F1C !important;
+            color: #FF9F1C !important;
+        }
+
+        /* Sem acessibilidade ativa, o clique com mouse não mostra borda */
+        #hitbox-mesa:focus {
+            outline: none !important;
+            background-color: transparent !important;
+            border-color: transparent !important;
+        }
+
+        .instrucao-texto {
+            font-size: 1.2rem;
+            text-align: center;
+            margin-top: 10px; 
+            margin-bottom: 0;
+            line-height: 1.6;
+            position: relative;
+            top: -130px;
+            outline: none;
+        }
+
+        .highlight {
+            color: #FF9F1C;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- 3. TÍTULO E ESTRUTURA VISUAL -->
+    <div class="dia-titulo" id="nav-titulo-sala" tabindex="1" data-fala="Dia 1">DIA 1</div>
+
+    <div class="sala-container">
+        <img id="imagem-sala" alt="Sala do Escritório" class="imagem-centralizada" />
+        
+        <div id="hitbox-mesa" tabindex="2" role="button" data-fala="Mesa de trabalho." onclick="clicarMesa()">
+            <span class="tag-hitbox">[ MESA ]</span>
+        </div>
+    </div>
+
+    <div class="instrucao-texto" id="instrucao-texto" tabindex="3">
+        Bem-vindo, <span class="highlight" id="nome-estagiario">Estagiário</span>! Pode escolher sua mesa.
+    </div>
+
+    <!-- 4. LÓGICA DE CARREGAMENTO E NAVEGAÇÃO -->
+    <script>
+        if (window.location.protocol !== 'file:') {
+            if (!sessionStorage.getItem('aba_ativa')) {
+                window.location.href = '/logout';
+            }
+        }
+
+        const imgSala = document.getElementById('imagem-sala');
+        const caminhoImg = _baseStatic + 'img/sala.png';
+
+        const revelarCenario = () => {
+            document.body.style.transition = 'opacity 0.4s ease-in-out';
+            document.body.style.opacity = '1';
+        };
+
+        if (imgSala) {
+            imgSala.onload = revelarCenario;
+            imgSala.onerror = revelarCenario;
+            imgSala.src = caminhoImg;
+
+            if (imgSala.complete && imgSala.naturalWidth !== 0) {
+                revelarCenario();
+            }
+            setTimeout(revelarCenario, 250);
+        }
+
+        const nomeSalvo = localStorage.getItem('nomeEstagiario') || 'Estagiário';
+        document.getElementById('nome-estagiario').innerText = nomeSalvo;
+
+        const instrucaoEl = document.getElementById('instrucao-texto');
+        if (instrucaoEl) {
+            instrucaoEl.setAttribute('data-fala', `Bem-vindo, ${nomeSalvo}! Pode escolher sua mesa.`);
+        }
+
+        if (localStorage.getItem('a11y_voz') === 'true') {
+            setTimeout(() => {
+                if (typeof falarTexto === 'function') {
+                    falarTexto(`Bem-vindo, ${nomeSalvo}! Pode escolher sua mesa.`, 'teclado');
+                }
+            }, 400);
+        }
+
+        function clicarMesa() {
+            if (window.location.protocol === 'file:') {
+                window.location.href = "mesa.html";
+            } else {
+                window.location.href = "/pi2/mesa";
+            }
+        }
+
+        window.addEventListener('DOMContentLoaded', () => {
+            const mesa = document.getElementById('hitbox-mesa');
+            if (mesa) {
+                mesa.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        clicarMesa();
+                    }
+                });
+
+                if (localStorage.getItem('a11y_teclado') === 'true') {
+                    setTimeout(() => focarItem(1), 150);
+                }
+            }
+        });
+    </script>
+
+    <!-- 5. SCRIPT DE ACESSIBILIDADE HÍBRIDO -->
+    <script>
+        document.write('<script src="' + _baseStatic + 'js/ace_index.js"><\/script>');
+    </script>
+</body>
+</html>

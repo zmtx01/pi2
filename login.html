@@ -1,6 +1,10 @@
+<!-- ========================================================= -->
+<!-- pi2/login.html                                            -->
+<!-- ========================================================= -->
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
+    <!-- 1. METADADOS E CABEÇALHO -->
     <meta name="robots" content="noindex, nofollow">
     <meta name="google" content="nositelinkssearchbox" />
     <meta name="google" content="notranslate" />
@@ -9,6 +13,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login - SEMAE</title>
 
+    <!-- 2. ESTILOS VISUAIS -->
     <style>
         *, *::before, *::after { box-sizing: border-box; }
 
@@ -100,7 +105,6 @@
             box-shadow: 0 0 0 3px rgba(29,158,117,0.12);
         }
 
-        /* MÁSCARA DE SENHA VIA CSS */
         .secure-input {
             -webkit-text-security: disc !important;
         }
@@ -234,6 +238,7 @@
 </head>
 
 <body>
+    <!-- 3. ESTRUTURA DO FORMULÁRIO -->
     <div class="card">
         <button class="theme-toggle" id="themeToggle" aria-label="Alternar tema">
             <svg class="theme-icon" id="themeIcon" viewBox="0 0 24 24">
@@ -271,25 +276,23 @@
         </div>
     </div>
 
+    <!-- 4. LÓGICA DE LOGIN E PRÉ-CARREGAMENTO -->
     <script>
-
+        // Pré-carregamento das imagens do jogo na nova pasta static/img/
         function precarregarImagensDoJogo() {
             const imagens = [
-                '/static/pi2/sala.png',
-                '/static/pi2/mesa.png',
-                '/static/pi2/mesa2.png'
+                '/static/img/sala.png',
+                '/static/img/mesa.png',
+                '/static/img/mesa2.png'
             ];
             imagens.forEach(url => {
                 const img = new Image();
                 img.src = url;
             });
-            console.log("Mídias de escritório e mesa pré-carregadas em segundo plano.");
         }
 
-        // Dispara o pré-carregamento em segundo plano assim que a tela de login termina de carregar
         window.addEventListener('load', precarregarImagensDoJogo);
 
-        
         const API = window.location.origin;
 
         const eyeOpen  = '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>';
@@ -352,7 +355,7 @@
 
                     setTimeout(() => {
                         sessionStorage.setItem('aba_ativa', 'true');
-                        window.location.href = '/pi2'; // Encaminha o usuário diretamente ao jogo
+                        window.location.href = '/pi2';
                     }, 1000);
                 } else {
                     msg.className = 'msg error';
@@ -360,7 +363,7 @@
                 }
             } catch (err) {
                 msg.className = 'msg error';
-                msg.textContent = 'Não foi possível conectar ao servidor. Verifique se o backend está rodando.';
+                msg.textContent = 'Não foi possível conectar ao servidor.';
                 console.error("Erro de login:", err);
             }
 

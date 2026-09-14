@@ -1,0 +1,551 @@
+<!-- ========================================================= -->
+<!-- pi2/templates/ranking.html                                -->
+<!-- ========================================================= -->
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <!-- 1. METADADOS E CARREGAMENTO HÍBRIDO -->
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SEMAE - Quadro de Líderes do TI</title>
+
+    <script>
+        const _baseStatic = window.location.protocol === 'file:' ? '../static/' : '/static/';
+    </script>
+
+    <!-- 2. ESTILOS VISUAIS DO RANKING E ACESSIBILIDADE -->
+    <style>
+        :root {
+            --cor-fundo: #000000;
+            --cor-texto: #5FDCF2;
+            --cor-destaque: #FF9F1C;
+            --cor-sucesso: #45CF8A;
+            --cor-erro: #FF3B30;
+            --cor-borda: #1e3540;
+            --cor-fundo-navegador: #0d161b;
+            --cor-fundo-painel: #050a0d;
+        }
+
+        body {
+            background-color: var(--cor-fundo);
+            color: var(--cor-texto);
+            font-family: 'Consolas', 'SF Mono', 'DejaVu Sans Mono', monospace;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 10px;
+            box-sizing: border-box;
+            user-select: none;
+        }
+
+        .ranking-container {
+            width: 100%;
+            max-width: 900px;
+            background-color: var(--cor-fundo-navegador);
+            border: 2px solid var(--cor-borda);
+            border-radius: 8px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .ranking-topo {
+            background-color: #121f27;
+            padding: 12px 18px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 2px solid var(--cor-borda);
+        }
+
+        .ranking-topo-titulo {
+            font-size: 0.9rem;
+            color: #a0b2be;
+            font-weight: bold;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        .botoes-decorativos {
+            display: flex;
+            gap: 6px;
+        }
+
+        .botao-circulo {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background-color: var(--cor-borda);
+        }
+
+        .ranking-corpo {
+            background-color: var(--cor-fundo-painel);
+            padding: 30px 40px;
+            box-sizing: border-box;
+        }
+
+        .titulo-principal {
+            text-align: center;
+            color: var(--cor-destaque);
+            font-size: 1.8rem;
+            font-weight: bold;
+            letter-spacing: 2px;
+            margin-bottom: 30px;
+            text-transform: uppercase;
+            padding-bottom: 0px;
+            outline: none;
+        }
+
+        .tabela-wrapper {
+            max-height: 350px;
+            overflow-y: auto;
+            margin-bottom: 30px;
+            border: 1px solid rgba(30, 53, 64, 0.4);
+            border-radius: 4px;
+            background-color: rgba(0, 0, 0, 0.2);
+            padding-right: 5px;
+        }
+
+        .tabela-wrapper::-webkit-scrollbar { width: 8px; }
+        .tabela-wrapper::-webkit-scrollbar-track { background: var(--cor-fundo-painel); }
+        .tabela-wrapper::-webkit-scrollbar-thumb { background: var(--cor-borda); border-radius: 4px; }
+        .tabela-wrapper::-webkit-scrollbar-thumb:hover { background: var(--cor-texto); }
+
+        .tabela-ranking {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 1.1rem;
+        }
+
+        .tabela-ranking th {
+            border-bottom: 2px solid var(--cor-texto);
+            color: var(--cor-texto);
+            text-align: left;
+            padding: 12px 8px;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            position: sticky;
+            top: 0;
+            background-color: var(--cor-fundo-painel);
+            z-index: 10;
+        }
+
+        .tabela-ranking td {
+            padding: 14px 8px;
+            border-bottom: 1px solid rgba(30, 53, 64, 0.4);
+            color: #ffffff;
+        }
+
+        .tabela-ranking tbody tr {
+            outline: none;
+            cursor: pointer;
+            transition: background-color 0.15s;
+        }
+
+        /* Destaque com Retângulo Laranja WCAG ao focar uma linha */
+        .tabela-ranking tbody tr.foco-linha,
+        .tabela-ranking tbody tr:focus {
+            outline: 2px solid #FF9F1C !important;
+            background-color: rgba(255, 159, 28, 0.12) !important;
+        }
+
+        .posicao-destaque-1 { color: var(--cor-destaque) !important; font-weight: bold; }
+        .posicao-destaque-2 { color: #e1d3b0 !important; font-weight: bold; }
+        .posicao-destaque-3 { color: #b77033 !important; font-weight: bold; }
+
+        .estrelas-progresso {
+            color: var(--cor-destaque);
+            letter-spacing: 2px;
+            font-size: 1.2rem;
+            display: inline-block;
+            vertical-align: middle;
+        }
+
+        .estrela-aranha-branca {
+            color: #ffffff !important;
+            font-size: 1.2rem !important;
+            letter-spacing: 2px;
+            display: inline-block;
+            vertical-align: middle;
+            filter: drop-shadow(0 0 3px #ffffff);
+        }
+
+        .estrelas-vazias {
+            color: #1e3540;
+            letter-spacing: 2px;
+            display: inline-block;
+            vertical-align: middle;
+        }
+
+        .tag-cargo {
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            padding: 4px 10px;
+            border-radius: 4px;
+            font-weight: bold;
+            border: 1px solid;
+            display: inline-block;
+            letter-spacing: 1px;
+        }
+
+        .cargo-senior     { background-color: rgba(255, 46, 147, 0.12); color: #FF2E93; border-color: #FF2E93; box-shadow: 0 0 4px rgba(255, 46, 147, 0.2); }
+        .cargo-pleno      { background-color: rgba(0, 240, 255, 0.12); color: #00F0FF; border-color: #00F0FF; box-shadow: 0 0 4px rgba(0, 240, 255, 0.2); }
+        .cargo-junior     { background-color: rgba(157, 78, 221, 0.12); color: #9D4EDD; border-color: #9D4EDD; box-shadow: 0 0 4px rgba(157, 78, 221, 0.2); }
+        .cargo-estagiario { background-color: rgba(57, 255, 20, 0.12); color: #39FF14; border-color: #39FF14; box-shadow: 0 0 4px rgba(57, 255, 20, 0.2); }
+        .cargo-aprendiz   { background-color: rgba(255, 183, 3, 0.12); color: #FFB703; border-color: #FFB703; box-shadow: 0 0 4px rgba(255, 183, 3, 0.2); }
+
+        .cargo-aranha {
+            background-color: rgba(255, 59, 48, 0.15);
+            color: var(--cor-erro);
+            border-color: var(--cor-erro);
+            box-shadow: 0 0 6px rgba(255, 59, 48, 0.4);
+        }
+
+        .ranking-acoes {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-top: 2px solid var(--cor-borda);
+            padding-top: 20px;
+        }
+
+        .btn-retro {
+            background: transparent;
+            color: var(--cor-texto);
+            border: 2px solid var(--cor-texto);
+            padding: 10px 20px;
+            font-family: inherit;
+            font-weight: bold;
+            cursor: pointer;
+            border-radius: 4px;
+            transition: 0.15s ease-in-out;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            outline: none;
+        }
+
+        .btn-retro:hover,
+        .btn-retro:focus,
+        .btn-retro.foco-linha {
+            background-color: var(--cor-texto);
+            color: #000000;
+            outline: 2px solid #FF9F1C !important;
+            outline-offset: 3px !important;
+        }
+
+        .btn-retro-destaque {
+            color: var(--cor-destaque);
+            border-color: var(--cor-destaque);
+        }
+
+        .btn-retro-destaque:hover,
+        .btn-retro-destaque:focus,
+        .btn-retro-destaque.foco-linha {
+            background-color: var(--cor-destaque);
+            color: #000000;
+            outline: 2px solid #5FDCF2 !important;
+            outline-offset: 3px !important;
+        }
+
+        .status-servidor {
+            font-size: 0.85rem;
+            color: var(--cor-sucesso);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .ponto-pisca {
+            width: 8px;
+            height: 8px;
+            background-color: var(--cor-sucesso);
+            border-radius: 50%;
+            animation: piscar 1s infinite ease-in-out;
+        }
+
+        @keyframes piscar {
+            0%, 100% { opacity: 0.2; }
+            50% { opacity: 1; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="ranking-container">
+        <!-- 3. CABEÇALHO SUPERIOR -->
+        <div class="ranking-topo">
+            <div class="botoes-decorativos">
+                <div class="botao-circulo"></div>
+                <div class="botao-circulo"></div>
+                <div class="botao-circulo"></div>
+            </div>
+            <div class="ranking-topo-titulo">intranet.semae.gov.br / cti_ranking</div>
+            <div style="width: 40px;"></div>
+        </div>
+
+        <!-- 4. CORPO E TABELA -->
+        <div class="ranking-corpo">
+            <div class="titulo-principal" id="titulo-ranking" tabindex="1">Quadro de Desempenho do TI</div>
+
+            <div class="tabela-wrapper">
+                <table class="tabela-ranking">
+                    <thead>
+                        <tr>
+                            <th style="width: 8%;">Pos</th>
+                            <th style="width: 35%;">Estagiário</th>
+                            <th style="width: 27%;">Estrelas</th>
+                            <th style="width: 30%;">Classificação</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tabela-corpo">
+                        <tr>
+                            <td colspan="4" style="text-align: center; color: #8da1ad; font-style: italic; padding: 40px; font-size: 1rem;">
+                                Sincronizando com o servidor de ranqueamento...
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- 5. AÇÕES INFERIORES -->
+            <div class="ranking-acoes">
+                <button class="btn-retro" id="btn-voltar" tabindex="2" onclick="voltarEscritorio()">&lt; Voltar para o Escritório</button>
+
+                <div class="status-servidor">
+                    <div class="ponto-pisca"></div>
+                    CONECTADO AO SERVIDOR
+                </div>
+
+                <button class="btn-retro btn-retro-destaque" id="btn-atualizar" tabindex="3" onclick="location.reload()">Atualizar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 6. LÓGICA E ACESSIBILIDADE COMPLETA -->
+    <script>
+        if (window.location.protocol !== 'file:') {
+            if (!sessionStorage.getItem('aba_ativa')) {
+                window.location.href = '/logout';
+            }
+        }
+
+        const configA11y = {
+            voz: localStorage.getItem('a11y_voz') === 'true',
+            teclado: localStorage.getItem('a11y_teclado') === 'true'
+        };
+
+        let vozMaria = null;
+        let itensNavegacao = [];
+        let indiceNavegacao = 0;
+
+        // Motor de voz Maria pt-BR
+        function carregarVozMaria() {
+            if (!('speechSynthesis' in window)) return;
+            const todas = window.speechSynthesis.getVoices();
+            vozMaria = todas.find(v => v.name.toLowerCase().includes('maria'))
+                    || todas.find(v => v.lang.toLowerCase().includes('pt-br') || v.lang.toLowerCase().includes('pt'));
+        }
+        carregarVozMaria();
+        if ('speechSynthesis' in window && window.speechSynthesis.onvoiceschanged !== undefined) {
+            window.speechSynthesis.onvoiceschanged = carregarVozMaria;
+        }
+
+        function falarTexto(texto) {
+            if (!configA11y.voz || !texto || !('speechSynthesis' in window)) return;
+            window.speechSynthesis.cancel();
+
+            const som = new SpeechSynthesisUtterance(texto);
+            som.lang = 'pt-BR';
+            if (!vozMaria) carregarVozMaria();
+            if (vozMaria) som.voice = vozMaria;
+            som.pitch = 1.0;
+            som.rate = 1.05;
+
+            window.speechSynthesis.speak(som);
+        }
+
+        function voltarEscritorio() {
+            if (window.history.length > 1) {
+                window.history.back();
+            } else {
+                window.location.href = window.location.protocol === 'file:' ? 'mesa.html' : '/pi2/mesa';
+            }
+        }
+
+        // Mapeia os elementos navegáveis por setas (Linhas da tabela + Botões)
+        function mapearItensRanking() {
+            const linhas = Array.from(document.querySelectorAll('#tabela-corpo tr')).filter(r => r.getAttribute('data-narrativa'));
+            const btnVoltar = document.getElementById('btn-voltar');
+            const btnAtualizar = document.getElementById('btn-atualizar');
+
+            itensNavegacao = [...linhas, btnVoltar, btnAtualizar].filter(el => el !== null);
+        }
+
+        function focarItemRanking(indice) {
+            if (itensNavegacao.length === 0) mapearItensRanking();
+            if (itensNavegacao.length === 0) return;
+
+            itensNavegacao.forEach(el => el.classList.remove('foco-linha'));
+            indiceNavegacao = (indice + itensNavegacao.length) % itensNavegacao.length;
+
+            const el = itensNavegacao[indiceNavegacao];
+            el.classList.add('foco-linha');
+            el.focus();
+
+            if (el.scrollIntoView) {
+                el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            }
+
+            const narrativa = el.getAttribute('data-narrativa');
+            if (narrativa) {
+                falarTexto(narrativa);
+            } else if (el.id === 'btn-voltar') {
+                falarTexto("Botão: Voltar para o escritório. Pressione Enter para sair ou use ESC.");
+            } else if (el.id === 'btn-atualizar') {
+                falarTexto("Botão: Atualizar pontuações do ranking. Pressione Enter para recarregar.");
+            }
+        }
+
+        // Navegação por teclado (Setas, Enter e ESC)
+        window.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                e.preventDefault();
+                voltarEscritorio();
+                return;
+            }
+
+            if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                focarItemRanking(indiceNavegacao + 1);
+                return;
+            }
+
+            if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                focarItemRanking(indiceNavegacao - 1);
+                return;
+            }
+
+            if (e.key === 'Enter' || e.key === ' ') {
+                const ativo = document.activeElement;
+                if (ativo && ativo.tagName === 'BUTTON') {
+                    e.preventDefault();
+                    ativo.click();
+                }
+            }
+        });
+
+        // Carregamento dinâmico dos dados do servidor
+           async function carregarRanking() {
+            const tbody = document.getElementById('tabela-corpo');
+
+            // Se aberto direto no Windows (file:) sem servidor rodando:
+            if (window.location.protocol === 'file:') {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="4" style="text-align: center; color: #8da1ad; font-style: italic; padding: 40px; font-size: 1rem;">
+                            Nenhum estagiário classificado no momento.<br>
+                            <span style="color: var(--cor-destaque); font-weight: bold; font-style: normal; display: inline-block; margin-top: 10px;">
+                                [!] Modo Local (Abra pelo servidor para sincronizar o banco).
+                            </span>
+                        </td>
+                    </tr>`;
+                finalizarCargaA11y();
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/get-ranking');
+                if (!response.ok) throw new Error("Erro de conexão");
+                const dados = await response.json();
+
+                if (dados.length === 0) {
+                    tbody.innerHTML = `
+                        <tr>
+                            <td colspan="4" style="text-align: center; color: #8da1ad; font-style: italic; padding: 40px; font-size: 1rem;">
+                                Nenhum estagiário classificado no momento.
+                            </td>
+                        </tr>`;
+                    finalizarCargaA11y();
+                    return;
+                }
+
+                tbody.innerHTML = '';
+
+                dados.forEach((u, index) => {
+                    const pos = index + 1;
+                    let classePos = '';
+                    if (pos === 1) classePos = 'posicao-destaque-1';
+                    else if (pos === 2) classePos = 'posicao-destaque-2';
+                    else if (pos === 3) classePos = 'posicao-destaque-3';
+
+                    const textoPos = String(pos).padStart(2, '0') + 'º';
+                    const estrelasGanhas = u.estrelas || 0;
+                    const totalEstrelasBase = u.conquista_aranha ? Math.max(0, estrelasGanhas - 1) : estrelasGanhas;
+
+                    let estrelasHTML = `<span class="estrelas-progresso">${"★".repeat(totalEstrelasBase)}</span>`;
+                    const vazias = Math.max(0, 5 - estrelasGanhas);
+                    if (vazias > 0) estrelasHTML += `<span class="estrelas-vazias">${"☆".repeat(vazias)}</span>`;
+                    if (u.conquista_aranha) estrelasHTML += `<span class="estrela-aranha-branca">★</span>`;
+
+                    let cargoText = 'Aprendiz';
+                    let cargoClasse = 'cargo-aprendiz';
+                    if (estrelasGanhas === 2) { cargoText = 'Estagiário'; cargoClasse = 'cargo-estagiario'; }
+                    else if (estrelasGanhas === 3) { cargoText = 'Júnior'; cargoClasse = 'cargo-junior'; }
+                    else if (estrelasGanhas === 4) { cargoText = 'Pleno'; cargoClasse = 'cargo-pleno'; }
+                    else if (estrelasGanhas >= 5) { cargoText = 'Sênior'; cargoClasse = 'cargo-senior'; }
+
+                    if (u.conquista_aranha) {
+                        cargoText += ' Aranha';
+                        cargoClasse += ' cargo-aranha';
+                    }
+
+                    // Narrativa rica e personalizada para a leitura da Maria
+                    const narrativaLinha = `${pos}º lugar: ${u.username}, ${estrelasGanhas} estrela${estrelasGanhas > 1 ? 's' : ''}${u.conquista_aranha ? ' com conquista especial do Aranhaverso' : ''}. Classificação: ${cargoText}.`;
+
+                    const tr = document.createElement('tr');
+                    tr.tabIndex = 0;
+                    tr.setAttribute('data-narrativa', narrativaLinha);
+                    tr.innerHTML = `
+                        <td class="${classePos}">${textoPos}</td>
+                        <td>${u.username}</td>
+                        <td>${estrelasHTML}</td>
+                        <td><span class="tag-cargo ${cargoClasse}">${cargoText}</span></td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+
+                finalizarCargaA11y();
+            } catch (e) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="4" style="text-align: center; color: #ff5f56; font-weight: bold; padding: 40px; font-size: 1rem;">
+                            [ERRO] Falha ao sincronizar com o banco de dados.
+                        </td>
+                    </tr>`;
+                finalizarCargaA11y();
+            }
+        }
+
+        function finalizarCargaA11y() {
+            mapearItensRanking();
+
+            if (configA11y.voz) {
+                setTimeout(() => {
+                    falarTexto("Quadro de desempenho do TI carregado. Pressione seta para baixo para ouvir os estagiários classificados ou ESC para voltar ao escritório.");
+                }, 400);
+            }
+
+            if (configA11y.teclado && itensNavegacao.length > 0) {
+                setTimeout(() => focarItemRanking(0), 600);
+            }
+        }
+
+        window.onload = carregarRanking;
+    </script>
+</body>
+</html>

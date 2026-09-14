@@ -1,0 +1,974 @@
+/* ========================================================= */
+/* static/css/mesa.css                                       */
+/* ========================================================= */
+
+/* 1. VARIÁVEIS DE CORES E RESET BASE */
+:root {
+    --cor-fundo: #000000;
+    --cor-texto: #5FDCF2;
+    --cor-destaque: #FF9F1C;
+    --cor-sucesso: #45CF8A;
+    --cor-erro: #ff5f56;
+
+    /* Simulador de chamados */
+    --cor-fundo-navegador: #0d161b;
+    --cor-fundo-painel: #050a0d;
+    --cor-borda: #1e3540;
+    --cor-barra-topo: #121f27;
+
+    /* Terminal CMD */
+    --cor-fundo-cmd: #000000;
+    --cor-texto-padrao-cmd: #cccccc;
+    --cor-barra-titulo-cmd: #181818;
+    --cor-borda-janela-cmd: #2d2d2d;
+}
+
+body {
+    opacity: 0;
+    background-color: var(--cor-fundo);
+    color: var(--cor-texto);
+    font-family: 'Consolas', 'SF Mono', 'DejaVu Sans Mono', monospace;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    margin: 0;
+    padding: 20px;
+    box-sizing: border-box;
+    position: relative;
+    overflow: hidden;
+    user-select: none;
+}
+
+.sala-container {
+    position: relative;
+    display: inline-block;
+    max-width: 100%;
+    top: 0;
+}
+
+.imagem-centralizada {
+    display: block;
+    width: 100%;
+    max-width: 900px;
+    height: auto;
+    border: 2px solid var(--cor-texto);
+    border-radius: 4px;
+    background-color: #050a0d;
+}
+
+
+/* 2. HITBOXES DA MESA (LIMPAS/TRANSPARENTES POR PADRÃO) */
+.hitbox {
+    position: absolute;
+    cursor: pointer;
+    box-sizing: border-box;
+    z-index: 410;
+    outline: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color 0.2s, outline 0.2s, border-color 0.2s;
+    border: 2px solid transparent; /* Invisível por padrão */
+    border-radius: 6px;
+    background-color: transparent;
+}
+
+/* A etiqueta só aparece se a acessibilidade visual for ligada */
+.hitbox .tag-hitbox {
+    display: none;
+    background: rgba(0, 0, 0, 0.75);
+    border: 1px solid #ffffff;
+    color: #ffffff;
+    font-size: 0.85rem;
+    font-weight: bold;
+    letter-spacing: 1px;
+    padding: 4px 10px;
+    border-radius: 4px;
+    pointer-events: none;
+    transition: color 0.2s, border-color 0.2s, background-color 0.2s;
+}
+
+/* QUANDO ACESSIBILIDADE ESTIVER ATIVA: Revela borda e etiquetas */
+body.icones-ativos .hitbox,
+body.teclado-ativo .hitbox {
+    border-color: #ffffff;
+    background-color: rgba(255, 255, 255, 0.06);
+}
+
+body.icones-ativos .hitbox .tag-hitbox,
+body.teclado-ativo .hitbox .tag-hitbox {
+    display: inline-block; 
+}
+
+/* Hover e Clique do mouse: SÓ aparece se acessibilidade visual ou teclado estiver ativa */
+body.icones-ativos .hitbox:hover,
+body.icones-ativos .hitbox:active,
+body.teclado-ativo .hitbox:hover,
+body.teclado-ativo .hitbox:active {
+    background-color: rgba(69, 207, 138, 0.25) !important;
+    border-color: #45CF8A !important;
+}
+
+body.icones-ativos .hitbox:hover .tag-hitbox,
+body.icones-ativos .hitbox:active .tag-hitbox,
+body.teclado-ativo .hitbox:hover .tag-hitbox,
+body.teclado-ativo .hitbox:active .tag-hitbox {
+    display: inline-block;
+    background: #03140a;
+    color: #45CF8A;
+    border-color: #45CF8A;
+}
+
+/* Foco de seleção: SÓ aparece se a acessibilidade de teclado estiver ativa */
+body.teclado-ativo .hitbox:focus,
+body.teclado-ativo .hitbox.foco-pagina,
+body.icones-ativos .hitbox.foco-pagina {
+    outline: 2px solid #FF9F1C !important;
+    border-color: #FF9F1C !important;
+    background-color: rgba(255, 159, 28, 0.2) !important;
+}
+
+body.teclado-ativo .hitbox:focus .tag-hitbox,
+body.teclado-ativo .hitbox.foco-pagina .tag-hitbox,
+body.icones-ativos .hitbox.foco-pagina .tag-hitbox {
+    display: inline-block;
+    border-color: #FF9F1C !important;
+    color: #FF9F1C !important;
+}
+
+/* Sem acessibilidade ativa, o clique com o mouse não desenha nenhuma borda ou fundo */
+.hitbox:focus {
+    outline: none !important;
+    background-color: transparent !important;
+    border-color: transparent !important;
+}
+
+/* Coordenadas exatas originais */
+#hitbox-tela {
+    top: 5%;
+    left: 25%;
+    width: 35%;
+    height: 45%;
+}
+
+#hitbox-arquivos {
+    top: 74%;
+    left: 60%;
+    width: 25%;
+    height: 25%;
+}
+
+#hitbox-manual {
+    top: 18%;
+    left: 70%;
+    width: 26%;
+    height: 36%;
+}
+
+#hitbox-chamados {
+    top: 55%;
+    left: 8%;
+    width: 15%;
+    height: 30%;
+}
+
+/* Luz decorativa do telefone */
+#luz-telefone {
+    position: absolute;
+    top: 54%;
+    left: 14%;
+    width: 11%;
+    height: 10%;
+    clip-path: polygon(50% 20%, 0% 50%, 10% 90%, 60% 60%);
+    pointer-events: none;
+    display: none;
+    z-index: 15;
+}
+
+#luz-telefone.ativa {
+    display: block;
+    background-color: rgba(95, 220, 242, 0.75);
+    animation: pulsarLuzCyan 1.0s infinite ease-in-out;
+}
+
+@keyframes pulsarLuzCyan {
+    0%, 100% {
+        opacity: 0.4;
+        filter: drop-shadow(0 0 10px #5FDCF2);
+    }
+    50% {
+        opacity: 1.0;
+        filter: drop-shadow(0 0 25px #5FDCF2) drop-shadow(0 0 45px #5FDCF2);
+    }
+}
+
+.instrucao-texto {
+    position: absolute;
+    bottom: -60px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: auto;
+    white-space: nowrap;
+    text-align: center;
+    font-size: 1.2rem;
+    line-height: 1.5;
+    margin: 0;
+    padding: 4px 14px;
+    color: var(--cor-texto);
+    border-radius: 4px;
+    outline: none;
+    transition: outline 0.2s, background-color 0.2s;
+}
+
+.instrucao-texto:focus,
+.instrucao-texto.foco-pagina,
+body.teclado-ativo .instrucao-texto:focus {
+    outline: 2px solid #FF9F1C !important;
+    background-color: rgba(255, 159, 28, 0.15) !important;
+}
+
+
+/* 3. JANELA DE ARQUIVOS (ACESSO RESTRITO) */
+.arquivos-backdrop {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background-color: rgba(0, 0, 0, 0.7);
+    z-index: 600;
+    justify-content: center;
+    align-items: center;
+}
+
+.terminal-box {
+    width: 100%;
+    max-width: 520px;
+    background-color: #051520;
+    border: 2px solid var(--cor-texto);
+    border-radius: 8px;
+    padding: 35px 30px;
+    box-shadow: 0 0 25px rgba(95, 220, 242, 0.15);
+    box-sizing: border-box;
+    text-align: center;
+}
+
+.titulo-alerta {
+    color: var(--cor-destaque);
+    font-size: 1.5rem;
+    font-weight: bold;
+    letter-spacing: 1px;
+    margin-bottom: 20px;
+}
+
+.mensagem-alerta {
+    font-size: 1.1rem;
+    line-height: 1.6;
+}
+
+
+/* 4. CADERNO 3D (MANUAL DOS ESTAGIÁRIOS) */
+.manual-backdrop {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background-color: rgba(0, 0, 0, 0.4);
+    z-index: 400;
+}
+
+.manual-wrapper-posicao {
+    display: none;
+    position: absolute;
+    right: 4%;
+    top: 15%;
+    z-index: 450;
+    pointer-events: none;
+}
+
+.caderno-moldura {
+    width: 840px;
+    height: 1060px;
+    background-color: #f6ebd0;
+    border-radius: 4px;
+    box-sizing: border-box;
+    position: relative;
+    border-left: 14px solid #2e1d11;
+    color: #1a1a1a;
+    box-shadow:
+        1px 1px 0px #d8ccb2,
+        2px 2px 0px #ffffff,
+        3px 3px 0px #d8ccb2,
+        4px 4px 0px #ffffff,
+        5px 5px 0px #d8ccb2,
+        6px 6px 18px rgba(0, 0, 0, 0.6);
+    perspective: 1200px;
+    pointer-events: auto;
+}
+
+.pagina {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    padding: 40px 45px 40px 65px;
+    box-sizing: border-box;
+    background-color: #f6ebd0;
+    overflow-y: auto;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    background-attachment: local;
+    background-image:
+        linear-gradient(rgba(0, 0, 0, 0.05) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 0, 0, 0.15) 1px, transparent 1px);
+    background-size: 100% 34px, 100% 100%;
+    background-position: 0 10px, 45px 0;
+    line-height: 34px;
+    font-size: 1.15rem;
+    display: none;
+    border-radius: 4px;
+    transform-origin: left center;
+    clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%);
+    transition: clip-path 0.25s ease-in-out, transform 0.6s ease-in-out, opacity 0.6s ease;
+}
+
+.pagina::-webkit-scrollbar { display: none; }
+.pagina.ativa { display: block; z-index: 3; }
+.pagina.atras { display: block; z-index: 1; }
+
+.pagina::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 0;
+    height: 0;
+    background: linear-gradient(135deg, transparent 50%, rgba(0, 0, 0, 0.15) 50%, rgba(0, 0, 0, 0.1) 55%, #f6ebd0 55%, #e1d3b0 100%);
+    box-shadow: -3px 3px 6px rgba(0, 0, 0, 0.15);
+    transition: width 0.25s ease-in-out, height 0.25s ease-in-out;
+    border-bottom-left-radius: 4px;
+    pointer-events: none;
+}
+
+.pagina.dobrando {
+    clip-path: polygon(0 0, calc(100% - 90px) 0, 100% 90px, 100% 100%, 0 100%);
+}
+
+.pagina.dobrando::after {
+    width: 90px;
+    height: 90px;
+}
+
+.pagina.saindo {
+    display: block;
+    z-index: 4;
+    opacity: 0;
+    transform: rotateY(-110deg);
+    clip-path: polygon(0 0, calc(100% - 90px) 0, 100% 90px, 100% 100%, 0 100%);
+}
+
+.pagina.voltando {
+    display: block !important;
+    z-index: 5;
+    opacity: 0;
+    transform: rotateY(-110deg);
+    transition: none !important;
+}
+
+.titulo-pagina {
+    font-weight: bold;
+    font-size: 1.5rem;
+    margin-bottom: 15px;
+    color: #2e1d11;
+    text-transform: uppercase;
+    border-bottom: 2px solid #2e1d11;
+    padding-bottom: 5px;
+}
+
+.subtitulo-pagina {
+    font-weight: bold;
+    font-size: 1.3rem;
+    margin: 15px 0 10px 0;
+    color: #2e1d11;
+    text-transform: uppercase;
+}
+
+.regra-destaque {
+    font-family: "Segoe Print", "Ink Free", "Noteworthy", "Chalkboard SE", "Comic Sans MS", cursive;
+    font-weight: bold;
+    color: #b30000;
+    font-size: 1.2rem;
+    display: inline-block;
+}
+
+.carimbo-python {
+    border: 2px dashed #b30000;
+    color: #b30000;
+    font-family: 'Consolas', monospace;
+    font-size: 0.8rem;
+    font-weight: bold;
+    text-transform: uppercase;
+    padding: 2px 6px;
+    display: inline-block;
+    transform: rotate(-3deg);
+    margin-bottom: 12px;
+    letter-spacing: 1px;
+    border-radius: 3px;
+}
+
+.nota-manuscrita {
+    color: #6b3d20;
+    font-family: "Segoe Print", cursive;
+    font-size: 1rem;
+    line-height: 30px;
+    margin-top: 10px;
+}
+
+.quadro-azul {
+    border: 3px solid #1a4cd6;
+    padding: 15px 25px;
+    text-align: center;
+    color: #1a4cd6;
+    font-weight: bold;
+    margin: 20px auto;
+    border-radius: 4px;
+    width: 85%;
+    background-color: rgba(26, 76, 214, 0.05);
+    box-sizing: border-box;
+    line-height: 1.5;
+    box-shadow: 4px 4px 0px rgba(26, 76, 214, 0.15);
+}
+
+
+/* 5. NAVEGADOR DE CHAMADOS */
+.chamados-backdrop {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background-color: rgba(0, 0, 0, 0.75);
+    z-index: 500;
+    justify-content: center;
+    align-items: center;
+}
+
+.navegador-container {
+    width: 95%;
+    max-width: 1200px;
+    border: 2px solid var(--cor-borda);
+    border-radius: 8px;
+    background-color: var(--cor-fundo-navegador);
+    box-shadow: 0 10px 35px rgba(0, 0, 0, 0.9);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+.navegador-topo {
+    background-color: var(--cor-barra-topo);
+    padding: 12px 18px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    border-bottom: 2px solid var(--cor-borda);
+}
+
+.botoes-janela {
+    display: flex;
+    gap: 6px;
+}
+
+.botao-janela-circulo {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background-color: var(--cor-borda);
+}
+
+.barra-endereco {
+    flex-grow: 1;
+    background-color: #050a0d;
+    border: 1px solid var(--cor-borda);
+    border-radius: 4px;
+    padding: 5px 12px;
+    font-size: 0.85rem;
+    color: #a0b2be;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.protocolo-seguro {
+    color: var(--cor-sucesso);
+    font-weight: bold;
+}
+
+.botao-fechar-x {
+    font-family: inherit;
+    font-weight: bold;
+    font-size: 1.3rem;
+    color: var(--cor-destaque);
+    cursor: pointer;
+    padding: 0 5px 0 15px;
+    user-select: none;
+    transition: color 0.15s;
+}
+
+.botao-fechar-x:hover {
+    color: #ff5f56;
+}
+
+.conteudo-web {
+    display: flex;
+    height: 800px;
+    background-color: var(--cor-fundo-painel);
+}
+
+.sidebar-chamados {
+    width: 320px;
+    border-right: 2px solid var(--cor-borda);
+    background-color: #060e12;
+    display: flex;
+    flex-direction: column;
+}
+
+.sidebar-titulo {
+    padding: 18px;
+    font-size: 0.95rem;
+    border-bottom: 1px solid var(--cor-borda);
+    font-weight: bold;
+    color: var(--cor-destaque);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.lista-chamados {
+    flex-grow: 1;
+    overflow-y: auto;
+}
+
+.painel-principal {
+    flex-grow: 1;
+    padding: 40px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Telas de boas-vindas do chamado */
+.tela-boas-vindas {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: center;
+    text-align: center;
+    height: 100%;
+    color: #8da1ad;
+}
+
+.caixa-titulo-sistema {
+    color: var(--cor-texto);
+    font-size: 1.8rem;
+    margin-bottom: 30px;
+    padding: 15px 40px;
+    border: 2px solid var(--cor-texto);
+    border-radius: 4px;
+    font-weight: bold;
+    letter-spacing: 2px;
+    background-color: rgba(95, 220, 242, 0.05);
+    display: inline-block;
+    align-self: center;
+}
+
+.descricao-sistema {
+    max-width: 700px;
+    line-height: 1.6;
+    margin-bottom: 40px;
+    font-size: 1.2rem;
+    color: #ffffff;
+}
+
+.campos-explicacao {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    text-align: left;
+    max-width: 800px;
+    margin-bottom: 50px;
+    font-size: 1.1rem;
+}
+
+.campo-info {
+    border: 1px solid var(--cor-borda);
+    padding: 18px;
+    border-radius: 4px;
+    background-color: rgba(30, 53, 64, 0.05);
+    line-height: 1.5;
+}
+
+.campo-info strong {
+    color: var(--cor-destaque);
+    display: block;
+    margin-bottom: 8px;
+    font-size: 1.25rem;
+}
+
+.item-chamado {
+    padding: 15px;
+    border-bottom: 1px solid var(--cor-borda);
+    cursor: pointer;
+    background: #10212b;
+    border-left: 3px solid var(--cor-destaque);
+}
+
+.item-status {
+    font-size: 0.75rem;
+    font-weight: bold;
+    text-transform: uppercase;
+    padding: 2px 6px;
+    border-radius: 3px;
+    background: rgba(255, 159, 28, 0.15);
+    color: var(--cor-destaque);
+    border: 1px solid var(--cor-destaque);
+}
+
+.item-codigo {
+    font-weight: bold;
+    font-size: 0.9rem;
+    margin: 5px 0 3px;
+    color: #fff;
+}
+
+.item-assunto {
+    font-size: 0.8rem;
+    color: #8da1ad;
+}
+
+.cabecalho-chamado {
+    border-bottom: 2px solid var(--cor-borda);
+    padding-bottom: 15px;
+    margin-bottom: 20px;
+}
+
+.codigo-chamado {
+    font-size: 1.4rem;
+    color: var(--cor-destaque);
+    font-weight: bold;
+    margin-bottom: 5px;
+}
+
+.assunto-chamado {
+    font-size: 1.15rem;
+    color: #fff;
+    font-weight: bold;
+}
+
+.grid-metadados {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+    background: #091216;
+    border: 1px solid var(--cor-borda);
+    padding: 15px;
+    border-radius: 4px;
+    margin-bottom: 25px;
+    font-size: 0.9rem;
+}
+
+.grid-metadados strong {
+    color: #8da1ad;
+}
+
+.secao-titulo {
+    font-size: 1rem;
+    color: var(--cor-destaque);
+    border-bottom: 1px solid var(--cor-borda);
+    padding-bottom: 5px;
+    margin-bottom: 10px;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.texto-corpo {
+    font-size: 0.95rem;
+    line-height: 1.6;
+    color: #cfdee7;
+    margin-bottom: 25px;
+}
+
+.bloco-encaminhamento {
+    border-left: 4px solid var(--cor-destaque);
+    background: rgba(255, 159, 28, 0.05);
+    padding: 15px 20px;
+    margin-bottom: 25px;
+    line-height: 1.6;
+}
+
+.btn-iniciar-atendimento {
+    background: transparent;
+    color: var(--cor-destaque);
+    border: 2px solid var(--cor-destaque);
+    padding: 12px 25px;
+    font-weight: bold;
+    font-size: 1rem;
+    cursor: pointer;
+    border-radius: 4px;
+    align-self: flex-start;
+    transition: 0.2s;
+}
+
+.btn-iniciar-atendimento:hover {
+    background: var(--cor-destaque);
+    color: #000;
+}
+
+.btn-iniciar-atendimento.btn-concluido {
+    color: var(--cor-sucesso);
+    border-color: var(--cor-sucesso);
+}
+
+.btn-iniciar-atendimento.btn-concluido:hover {
+    background: var(--cor-sucesso);
+    color: #000;
+}
+
+.alerta-vazio {
+    border: 1px dashed var(--cor-borda);
+    padding: 25px 40px;
+    background-color: rgba(30, 53, 64, 0.1);
+    border-radius: 4px;
+    max-width: 500px;
+    text-align: center;
+}
+
+
+/* 6. JANELA DO PROMPT DE COMANDO (CMD) */
+.tela-backdrop {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background-color: rgba(0, 0, 0, 0.75);
+    z-index: 460;
+    justify-content: center;
+    align-items: center;
+}
+
+.cmd-janela {
+    width: 95%;
+    max-width: 1200px;
+    background-color: var(--cor-fundo-cmd);
+    border: 1px solid var(--cor-borda-janela-cmd);
+    box-shadow: 0 15px 50px rgba(0, 0, 0, 0.9);
+    border-radius: 8px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    pointer-events: auto;
+}
+
+.cmd-titulo-barra {
+    background-color: var(--cor-barra-titulo-cmd);
+    padding: 12px 18px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.85rem;
+    color: #a0a0a0;
+    border-bottom: 1px solid #222222;
+}
+
+.cmd-titulo-texto {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.cmd-icone-simulado {
+    width: 12px;
+    height: 12px;
+    background-color: var(--cor-texto);
+    border-radius: 2px;
+}
+
+.cmd-controles-janela {
+    display: flex;
+    gap: 15px;
+    font-size: 0.9rem;
+    cursor: pointer;
+}
+
+.botao-fechar-cmd {
+    transition: color 0.15s;
+}
+
+.botao-fechar-cmd:hover {
+    color: #ff5f56;
+}
+
+.cmd-corpo {
+    background-color: var(--cor-fundo-cmd);
+    padding: 40px;
+    height: 800px;
+    box-sizing: border-box;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    cursor: text;
+}
+
+.cmd-corpo::before {
+    content: " ";
+    display: block;
+    position: absolute;
+    top: 0; left: 0; bottom: 0; right: 0;
+    background: linear-gradient(rgba(0, 0, 0, 0) 50%, rgba(255, 255, 255, 0.012) 50%);
+    background-size: 100% 3px;
+    z-index: 10;
+    pointer-events: none;
+}
+
+.historico-terminal {
+    flex-grow: 1;
+    overflow-y: auto;
+    font-size: 1.25rem;
+    line-height: 1.6;
+    color: var(--cor-texto-padrao-cmd);
+    white-space: pre-wrap;
+    z-index: 20;
+    padding-right: 10px;
+    user-select: text !important;
+    -webkit-user-select: text !important;
+}
+
+.historico-terminal * {
+    user-select: text !important;
+    -webkit-user-select: text !important;
+}
+
+.historico-terminal::-webkit-scrollbar { width: 10px; }
+.historico-terminal::-webkit-scrollbar-track { background: #000; }
+.historico-terminal::-webkit-scrollbar-thumb { background: #333; border-radius: 4px; }
+
+.linha-input {
+    display: flex;
+    align-items: center;
+    font-size: 1.25rem;
+    color: var(--cor-texto-padrao-cmd);
+    border-top: 1px solid #1a1a1a;
+    padding-top: 20px;
+    z-index: 20;
+    margin-top: 10px;
+}
+
+.prompt-simbolo {
+    margin-right: 12px;
+    font-weight: bold;
+}
+
+.input-wrapper {
+    position: relative;
+    flex-grow: 1;
+    display: flex;
+    align-items: center;
+}
+
+.campo-entrada, #ghost-text {
+    font-family: inherit;
+    font-size: 1.25rem;
+    margin: 0;
+    padding: 0;
+    border: none;
+    width: 100%;
+    letter-spacing: 0;
+    background: transparent;
+}
+
+.campo-entrada {
+    position: relative;
+    z-index: 2;
+    color: #fff;
+    outline: none;
+    caret-color: #fff;
+}
+
+#ghost-text {
+    position: absolute;
+    left: 0;
+    top: 0;
+    color: #444;
+    pointer-events: none;
+    white-space: pre;
+}
+
+.transicao-verde { color: var(--cor-sucesso) !important; font-weight: bold; }
+.interacao-amarela { color: var(--cor-destaque) !important; font-weight: bold; }
+.cor-erro { color: var(--cor-erro) !important; font-weight: bold; }
+
+
+/* 7. FOCO DE ACESSIBILIDADE COM RETÂNGULO LARANJA */
+.foco-interno {
+    outline: 2px solid #FF9F1C !important;
+    outline-offset: 4px !important;
+    background-color: rgba(255, 159, 28, 0.14) !important;
+    border-radius: 4px;
+    box-shadow: 0 0 10px rgba(255, 159, 28, 0.25) !important;
+    transition: outline 0.15s, background-color 0.15s;
+}
+
+.botao-fechar-x:focus,
+.botao-fechar-x.foco-interno,
+.botao-fechar-cmd:focus,
+.botao-fechar-cmd.foco-interno {
+    outline: 2px solid #FF9F1C !important;
+    color: #FF9F1C !important;
+    border-radius: 3px;
+    background-color: transparent !important;
+}
+
+.caderno-moldura .foco-interno {
+    outline: 3px solid #FF9F1C !important;
+    background-color: rgba(255, 159, 28, 0.2) !important;
+}
+
+
+/* 8. RESPONSIVIDADE */
+@media (max-height: 1100px) {
+    .manual-wrapper-posicao {
+        transform: scale(0.8);
+        transform-origin: top right;
+    }
+}
+
+@media (max-height: 920px) {
+    .manual-wrapper-posicao {
+        transform: scale(0.7);
+        transform-origin: top right;
+    }
+    .cmd-janela, .navegador-container {
+        transform: scale(0.85);
+        transform-origin: center;
+    }
+}
+
+@media (max-height: 760px) {
+    .manual-wrapper-posicao {
+        transform: scale(0.55);
+        transform-origin: top right;
+    }
+    .cmd-janela, .navegador-container {
+        transform: scale(0.7);
+        transform-origin: center;
+    }
+}
