@@ -178,6 +178,11 @@ async function inicializarMesa() {
                 const data = await res.json();
                 progressoDoUsuario = data.progresso;
 
+                const telaBackdrop = document.getElementById('tela-backdrop');
+                if (telaBackdrop && telaBackdrop.style.display === 'flex') {
+                    clicarTela();
+                }
+
                 if (data.conquista_aranha === true) {
                     localStorage.setItem(nomeEstagiario + '_conquistaAranha', 'true');
                     if (imgMesa) imgMesa.src = baseImg + 'mesa2.png';
@@ -220,10 +225,27 @@ function clicarTela() {
     }
 
     telaBackdrop.style.display = 'flex';
-    const areaInput = document.getElementById('area-input');
 
-    if (progressoDoUsuario === -1) {
-        document.getElementById('historico-linhas').innerHTML = `
+    const areaInput = document.getElementById('area-input');
+    const historico = document.getElementById('historico-linhas');
+    const input = document.getElementById('prompt-input');
+
+    // 1. GARANTE QUE A LINHA C:\SEMAE\ATD-07> SEMPRE ESTEJA VISÍVEL DE PRIMEIRA
+    if (areaInput && (!jogoAtivo || faseAtual < roteiroAtual.length)) {
+        areaInput.style.display = 'flex';
+        areaInput.style.opacity = '1';
+    }
+
+    // 2. Se já estiver com o chamado ativo em progresso, inicia as fases
+    if (progressoDoUsuario === 2 && !jogoAtivo) {
+        iniciarTerminalJogo();
+        return;
+    }
+
+    // 3. Garante o texto inicial padrão no histórico caso não esteja em jogo
+    if (!jogoAtivo && !modoMenuAcl && historico) {
+        if (!historico.innerHTML.includes("Microsoft Windows")) {
+            historico.innerHTML = `
 <div class="aviso-azul-acl" style="color: #38bdf8; margin-bottom: 12px; font-weight: bold;">Para ativar a acessibilidade utilize o comando ACL_ON no terminal.</div>
 Microsoft Windows [versão 10.0.19045]
 (c) Microsoft Corporation. Todos os direitos reservados.
@@ -231,20 +253,12 @@ Microsoft Windows [versão 10.0.19045]
 =======================================================
                TERMINAL OPERACIONAL SEMAE
 =======================================================
-<div class="interacao-amarela" style="margin-top:40px;">[SISTEMA] Sincronizando conexão segura. Aguarde...</div>`;
-        if (areaInput) areaInput.style.display = 'none';
-        return;
+<div class="interacao-amarela" style="margin-top:40px;">Nenhum atendimento iniciado. Verifique seus chamados.</div>`;
+        }
     }
 
-    if (areaInput && progressoDoUsuario < 3) areaInput.style.display = 'flex';
-
-    if (progressoDoUsuario === 2 && !jogoAtivo) {
-        iniciarTerminalJogo();
-        return;
-    }
-
+    // 4. Foca no campo de texto imediatamente
     setTimeout(() => {
-        const input = document.getElementById('prompt-input');
         if (input && !input.disabled) input.focus();
     }, 50);
 }
