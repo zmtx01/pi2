@@ -412,26 +412,14 @@
         localStorage.setItem('nomeEstagiario', name);
         if ('speechSynthesis' in window) window.speechSynthesis.cancel();
 
+        // 1. ESCONDE O WIDGET E CABEÇALHOS NO MILISSEGUNDO ZERO
         const widget = document.getElementById('widget-acessibilidade');
         if (widget) widget.style.display = 'none';
 
-        if (window.location.protocol !== 'file:') {
-            try {
-                await fetch('/api/save-score', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ 
-                        progresso: 1, 
-                        estrelas: 0, 
-                        username_jogo: name 
-                    })
-                });
-            } catch (e) {}
-        }
-
         document.getElementById('cabecalho-principal').style.display = 'none';
         document.getElementById('conexao-ascii').style.display = 'none';
-        
+
+        // 2. TROCA DE TELA IMEDIATAMENTE (SEM ATRASO DE REDE)
         const screen1 = document.getElementById('screen-1');
         const screen2 = document.getElementById('screen-2');
         
@@ -439,12 +427,26 @@
         screen2.style.display = 'block';
         screen2.innerHTML = ''; 
 
+        // 3. ENVIO EM SEGUNDO PLANO (SEM AWAIT: NÃO CONGELA A TELA)
+        if (window.location.protocol !== 'file:') {
+            fetch('/api/save-score', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ 
+                    progresso: 1, 
+                    estrelas: 0, 
+                    username_jogo: name 
+                })
+            }).catch(() => {});
+        }
+
         skipTyping = false; 
 
         if (typeof falarTexto === 'function') {
             falarTexto(`Carregando perfil. Estagiário: ${name}. Setor: Tecnologia da Informação. Cargo: Estagiário de T.I. Status: Novo Estagiário.`, 'teclado');
         }
 
+        // 4. DIGITAÇÃO DAS LINHAS DE PERFIL
         await printLineSlow(screen2, "CARREGANDO PERFIL...", 25);
         await printEstagiarioLine(screen2, name, 25);
         await printLineSlow(screen2, "Setor: Tecnologia da Informação", 25);
@@ -461,7 +463,7 @@
         screen2.appendChild(btnTurno);
         btnTurno.focus();
 
-        let transicaoIniciada = false; // TRAVA 2: Impede duplo avanço para a sala
+        let transicaoIniciada = false;
 
         function avancar(e) {
             if (e) e.preventDefault();
