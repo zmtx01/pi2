@@ -23,6 +23,12 @@ const nomeSalvoRaw = localStorage.getItem('nomeEstagiario');
 const nomeEstagiario = (nomeSalvoRaw || 'Estagiário').toUpperCase();
 let roteiroAtual = [];
 
+// LEITURA INSTANTÂNEA DA FASE SALVA (SEM ESPERAR REDE OU F5)
+const faseSalvaLocal = localStorage.getItem(nomeEstagiario + '_fase_ativa');
+if (faseSalvaLocal !== null) {
+    faseAtual = parseInt(faseSalvaLocal, 10);
+}
+
 const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
 
 function carregarCartuchoNativoDia1(nome) {
@@ -190,7 +196,12 @@ async function inicializarMesa() {
 
                 if (data.progresso === 2) {
                     primeiraVisitaRealizada = true;
-                    acenderLuzChamado();
+                    chamadoAtivo = true; // Chamado existe no sistema...
+                    
+                    // ...MAS A LUZ FICA APAGADA POIS JÁ FOI ATENDIDO!
+                    const luz = document.getElementById('luz-telefone');
+                    if (luz) luz.classList.remove('ativa');
+
                     const faseSalva = localStorage.getItem(nomeEstagiario + '_fase_ativa');
                     if (faseSalva !== null) faseAtual = parseInt(faseSalva, 10);
                 } else if (data.progresso >= 3) {
@@ -327,12 +338,16 @@ function acenderLuzChamado() {
     montarPainelChamadoAtivo();
 }
 
+// =========================================================
+// static/js/mesa_core.js -> Seção 4: montarPainelChamadoAtivo()
+// =========================================================
 function montarPainelChamadoAtivo() {
     const sidebarLista = document.getElementById('sidebar-lista');
     const painelPrincipal = document.getElementById('painel-chamados-conteudo');
 
     if (!sidebarLista || !painelPrincipal) return;
 
+    // Resgate seguro dos metadados do chamado
     const chamado = (typeof chamadoDia1 !== 'undefined') ? chamadoDia1 : (window.chamadoDia1 || {
         codigo: "SE-CTI-26-0001",
         assunto: "Diagnóstico básico da estação de trabalho",
@@ -344,11 +359,25 @@ function montarPainelChamadoAtivo() {
         supervisor: "Marcos Almeida"
     });
 
+    // Identificação dos 3 estados possíveis do chamado
     const isConcluido = (progressoDoUsuario >= 3);
-    const textoStatus = isConcluido ? 'Concluído' : 'Pendente';
-    const corStatus = isConcluido ? 'var(--cor-sucesso)' : 'var(--cor-destaque)';
-    const bgStatus = isConcluido ? 'rgba(69, 207, 138, 0.15)' : 'rgba(255, 159, 28, 0.15)';
+    const isEmAndamento = (progressoDoUsuario === 2 || faseAtual > 0);
 
+    let textoStatus = 'Pendente';
+    let corStatus = 'var(--cor-destaque)';
+    let bgStatus = 'rgba(255, 159, 28, 0.15)';
+
+    if (isConcluido) {
+        textoStatus = 'Concluído';
+        corStatus = 'var(--cor-sucesso)';
+        bgStatus = 'rgba(69, 207, 138, 0.15)';
+    } else if (isEmAndamento) {
+        textoStatus = 'Em atendimento';
+        corStatus = 'var(--cor-destaque)';
+        bgStatus = 'rgba(255, 159, 28, 0.2)';
+    }
+
+    // 1. Atualiza a barra lateral
     sidebarLista.innerHTML = `
         <div class="item-chamado" id="item-chamado-sidebar" tabindex="0">
             <span class="item-status" id="badge-sidebar" style="background-color: ${bgStatus}; color: ${corStatus}; border-color: ${corStatus};">${textoStatus}</span>
@@ -357,18 +386,22 @@ function montarPainelChamadoAtivo() {
         </div>
     `;
 
+    // 2. Decide qual botão exibir na base da janela
     let botoesAcaoHtml = '';
-    if (!isConcluido) {
-        botoesAcaoHtml = `<button class="btn-iniciar-atendimento" id="btn-iniciar-jogo" tabindex="0" onclick="iniciarTerminalJogo()">[ INICIAR ATENDIMENTO ]</button>`;
-    } else {
+    if (isConcluido) {
         botoesAcaoHtml = `
             <div style="display: flex; gap: 15px; flex-wrap: wrap;">
                 <button class="btn-iniciar-atendimento btn-concluido" id="btn-refazer-atd" tabindex="0" onclick="refazerAtendimento()">[ REFAZER ATENDIMENTO ]</button>
                 <button class="btn-iniciar-atendimento btn-concluido" id="btn-rever-atd" tabindex="0" onclick="reverAtendimento()">[ REVER ATENDIMENTO ]</button>
             </div>
         `;
+    } else if (isEmAndamento) {
+        botoesAcaoHtml = `<button class="btn-iniciar-atendimento" id="btn-iniciar-jogo" tabindex="0" onclick="iniciarTerminalJogo()">[ CONTINUAR ATENDIMENTO ]</button>`;
+    } else {
+        botoesAcaoHtml = `<button class="btn-iniciar-atendimento" id="btn-iniciar-jogo" tabindex="0" onclick="iniciarTerminalJogo()">[ INICIAR ATENDIMENTO ]</button>`;
     }
 
+    // 3. Monta o corpo completo do painel de chamados
     painelPrincipal.innerHTML = `
         <div class="cabecalho-chamado" id="secao-cabecalho-chamado" tabindex="0">
             <div>
@@ -717,7 +750,8 @@ Microsoft Windows [versão 10.0.19045]
 }
 
 async function iniciarTerminalJogo() {
-    if (jogoAtivo) return;
+    // Só bloqueia caso o terminal esteja no meio de uma animação de digitação
+    if (digitando) return;
 
     garantirRoteiroCarregado();
 
@@ -725,12 +759,15 @@ async function iniciarTerminalJogo() {
     errosTotaisNoDia = 0;
     fecharChamados();
 
+    // Apaga a luz pulsante do telefone imediatamente
     const luz = document.getElementById('luz-telefone');
     if (luz) luz.classList.remove('ativa');
     chamadoAtivo = false;
 
+    // Abre a tela do terminal
     clicarTela();
 
+    // Sincroniza com o banco que o chamado foi iniciado (Progresso 2)
     if (window.location.protocol !== 'file:' && progressoDoUsuario < 2) {
         fetch('/api/save-score', {
             method: 'POST',
@@ -751,6 +788,7 @@ async function iniciarTerminalJogo() {
     input.disabled = true;
     areaInput.style.opacity = '.3';
 
+    // Imprime o cabeçalho oficial do Windows
     const header = document.createElement('div');
     header.innerHTML = `
 <div class="aviso-azul-acl" style="color: #38bdf8; margin-bottom: 12px; font-weight: bold;">Para ativar a acessibilidade utilize o comando ACL_ON no terminal.</div>
@@ -762,8 +800,10 @@ Microsoft Windows [versão 10.0.19045]
 =======================================================`;
     historico.appendChild(header);
 
+    // Garante que o ponteiro da fase esteja dentro dos limites válidos
     faseAtual = Math.min(Math.max(0, faseAtual), roteiroAtual.length - 1);
 
+    // RECONSTRUÇÃO: Se você parou na fase 3 ou superior, imprime o passado em verde
     if (faseAtual > 0 && roteiroAtual.length > 0) {
         for (let i = 0; i < faseAtual; i++) {
             const f = roteiroAtual[i];
@@ -788,6 +828,7 @@ Microsoft Windows [versão 10.0.19045]
             historico.appendChild(spacer);
         }
 
+        // Libera as páginas do manual correspondentes ao progresso recuperado
         if (faseAtual >= 1) paginasLiberadas = Math.max(paginasLiberadas, 3);
         if (faseAtual >= 3) paginasLiberadas = Math.max(paginasLiberadas, 4);
         if (faseAtual >= 5) paginasLiberadas = Math.max(paginasLiberadas, 5);
@@ -795,6 +836,7 @@ Microsoft Windows [versão 10.0.19045]
         if (faseAtual >= 8) paginasLiberadas = Math.max(paginasLiberadas, 7);
     }
 
+    // Imprime a tarefa da fase exata onde o jogador parou
     if (roteiroAtual && faseAtual < roteiroAtual.length) {
         await escreverNoTerminal(roteiroAtual[faseAtual].prompt);
         if (typeof narrarTerminalA11y === 'function') {
