@@ -621,13 +621,18 @@ function exibirMenuAcl() {
     const tecladoAtivo = localStorage.getItem('a11y_teclado') === 'true';
     const iconesAtivos = localStorage.getItem('a11y_icones') === 'true';
 
+    // 16 '=' no celular e 55 '=' no computador
+    const isMobileMenu = window.innerWidth < 768 || ('ontouchstart' in window);
+    const divAcl = isMobileMenu ? "================" : "=======================================================";
+    const titAcl = isMobileMenu ? " PAINEL DE ACESSIBILIDADE" : "              PAINEL DE ACESSIBILIDADE (ACL)";
+
     const divMenu = document.createElement('div');
     divMenu.style.margin = "15px 0";
     divMenu.style.lineHeight = "1.6";
     divMenu.innerHTML = `
-=======================================================
-              PAINEL DE ACESSIBILIDADE (ACL)
-=======================================================
+${divAcl}
+${titAcl}
+${divAcl}
 [1] Leitura por Voz          : [ ${vozAtiva ? '<span class="transicao-verde">LIGADO [✓]</span>' : '<span style="color:#8da1ad">DESLIGADO</span>'} ]
 [2] Navegação por Teclado    : [ ${tecladoAtivo ? '<span class="transicao-verde">LIGADO [✓]</span>' : '<span style="color:#8da1ad">DESLIGADO</span>'} ]
 [3] Destaques Visuais/Ícones : [ ${iconesAtivos ? '<span class="transicao-verde">LIGADO [✓]</span>' : '<span style="color:#8da1ad">DESLIGADO</span>'} ]
@@ -711,15 +716,20 @@ async function reverAtendimento() {
     historico.innerHTML = "";
     if (areaInput) areaInput.style.display = 'none';
 
+    // 16 '=' no celular e 55 '=' no computador
+    const isMobileRev = window.innerWidth < 768 || ('ontouchstart' in window);
+    const divRev = isMobileRev ? "================" : "=======================================================";
+    const titRev = isMobileRev ? " REVISÃO SE-CTI" : "         REVISÃO DE ATENDIMENTO — SE-CTI-26-0001";
+
     const header = document.createElement('div');
     header.innerHTML = `
 <div class="aviso-azul-acl" style="color: #38bdf8; margin-bottom: 12px; font-weight: bold;">Para ativar a acessibilidade utilize o comando ACL_ON no terminal.</div>
 Microsoft Windows [versão 10.0.19045]
 (c) Microsoft Corporation. Todos os direitos reservados.
 
-=======================================================
-         REVISÃO DE ATENDIMENTO — SE-CTI-26-0001
-=======================================================`;
+${divRev}
+${titRev}
+${divRev}`;
     historico.appendChild(header);
 
     for (let i = 0; i < roteiroAtual.length; i++) {

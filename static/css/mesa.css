@@ -57,6 +57,9 @@ body {
     background-color: #050a0d;
 }
 
+/* Controle do cabeçalho do terminal: padrão desktop */
+.linha-cmd-desktop { display: inline; }
+.linha-cmd-mobile { display: none; }
 
 /* 2. HITBOXES DA MESA (LIMPAS/TRANSPARENTES POR PADRÃO) */
 .hitbox {
@@ -1079,4 +1082,7 @@ body.teclado-ativo .instrucao-texto:focus {
         transform: translate(-50%, -50%) scale(0.42) !important;
         transform-origin: center center !important;
     }
+
+    .linha-cmd-desktop { display: none !important; }
+    .linha-cmd-mobile { display: inline !important; }
 }
