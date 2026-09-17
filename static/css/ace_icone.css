@@ -227,19 +227,23 @@ body.icones-ativos .tag-acessivel {
 }
 
 @media (max-width: 768px) {
-    /* Posiciona o botão de acessibilidade logo abaixo da caixa de login */
     .widget-acessibilidade {
         position: relative !important;
         top: auto !important;
         left: auto !important;
         transform: none !important;
-        margin: 20px auto 0 auto !important;
+        margin: 15px auto 0 auto !important;
         display: flex !important;
         justify-content: center !important;
         width: 100% !important;
     }
 
-    /* Painel abre exatamente no centro da tela sobre a caixa de login */
+    /* Remove a menção de Alt + A no celular */
+    .widget-acessibilidade .msg-linha2 {
+        display: none !important;
+    }
+
+    /* Painel abre exatamente centralizado sobre o formulário */
     .painel-gaveta-opcoes {
         position: fixed !important;
         top: 50% !important;
@@ -247,9 +251,22 @@ body.icones-ativos .tag-acessivel {
         transform: translate(-50%, -50%) !important;
         width: min(92vw, 380px) !important;
         max-width: 380px !important;
-        min-height: 280px !important;
+        min-height: 250px !important;
         height: auto !important;
-        padding: 18px 20px !important;
+        padding: 16px 18px !important;
         box-sizing: border-box !important;
+    }
+
+    /* Transforma o [ESC] FECHAR em um X vermelho no topo */
+    .btn-fechar-painel {
+        color: #ff5f56 !important;
+        font-size: 1.3rem !important;
+        font-weight: bold !important;
+        font-family: Arial, sans-serif !important;
+    }
+
+    /* Remove o rodapé "Pressione ESC" no celular */
+    .painel-rodape-dica {
+        display: none !important;
     }
 }

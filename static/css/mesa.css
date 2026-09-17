@@ -969,14 +969,13 @@ body.teclado-ativo .instrucao-texto:focus {
 
 /* 9. RESPONSIVIDADE MOBILE: CENTRALIZAÇÃO, PROPORÇÕES E SEM ROLAGEM LATERAL */
 @media (max-width: 768px) {
-    /* 1. Centraliza a mesa perfeitamente no meio da tela */
     body {
         display: flex !important;
         justify-content: center !important;
         align-items: center !important;
         min-height: 100vh !important;
         height: auto !important;
-        overflow: auto !important; /* Libera o arraste com o dedo e zoom */
+        overflow: auto !important;
         touch-action: pan-x pan-y pinch-zoom !important;
         padding: 20px 10px !important;
         box-sizing: border-box !important;
@@ -987,7 +986,6 @@ body.teclado-ativo .instrucao-texto:focus {
         top: 0 !important;
     }
 
-    /* Texto da base fluido e centralizado */
     .instrucao-texto {
         bottom: -55px !important;
         white-space: normal !important;
@@ -998,19 +996,19 @@ body.teclado-ativo .instrucao-texto:focus {
         text-align: center !important;
     }
 
-    /* 2. Terminal CMD com proporção de janela de desktop (sem rolagem horizontal) */
+    /* Terminal CMD proporcional e contido */
     .cmd-janela {
         width: 94vw !important;
-        max-width: 600px !important;
+        max-width: 650px !important;
         height: auto !important;
-        max-height: 82vh !important;
+        max-height: 85vh !important;
         transform: none !important;
     }
 
     .cmd-corpo {
-        padding: 20px 15px !important;
-        height: 460px !important;
-        max-height: 62vh !important;
+        padding: 15px !important;
+        height: 480px !important;
+        max-height: 65vh !important;
     }
 
     .historico-terminal {
@@ -1018,69 +1016,54 @@ body.teclado-ativo .instrucao-texto:focus {
         line-height: 1.4 !important;
         white-space: pre-wrap !important;
         word-break: break-word !important;
-        overflow-x: hidden !important; /* Elimina barra horizontal no terminal */
-    }
-
-    .linha-input {
-        font-size: 0.95rem !important;
-        padding-top: 12px !important;
-    }
-
-    .campo-entrada, #ghost-text {
-        font-size: 0.95rem !important;
-    }
-
-    /* 3. Telefone/Chamados organizado e fluido sem corte lateral */
-    .navegador-container {
-        width: 94vw !important;
-        max-width: 620px !important;
-        max-height: 84vh !important;
-        transform: none !important;
-    }
-
-    .conteudo-web {
-        flex-direction: column !important; /* Sidebar acima do conteúdo no celular */
-        height: auto !important;
-        max-height: 68vh !important;
-        overflow-y: auto !important;
         overflow-x: hidden !important;
     }
 
+    /* Telefone/Chamados: Mantém a estrutura de 2 colunas proporcional e o botão [X] visível */
+    .navegador-container {
+        width: 96vw !important;
+        max-width: 800px !important;
+        height: auto !important;
+        max-height: 85vh !important;
+        transform: none !important;
+    }
+
+    .navegador-topo {
+        padding: 10px 15px !important;
+    }
+
+    .conteudo-web {
+        display: flex !important;
+        flex-direction: row !important; /* Preserva as 2 colunas originais */
+        height: 520px !important;
+        max-height: 70vh !important;
+        overflow: auto !important;
+    }
+
     .sidebar-chamados {
-        width: 100% !important;
-        border-right: none !important;
-        border-bottom: 2px solid var(--cor-borda) !important;
-    }
-
-    .sidebar-titulo {
-        padding: 10px 15px !important;
-    }
-
-    .item-chamado {
-        padding: 10px 15px !important;
+        width: 220px !important; /* Sidebar compacta proporcional */
+        flex-shrink: 0 !important;
     }
 
     .painel-principal {
         padding: 20px 15px !important;
-        overflow-x: hidden !important;
+        flex-grow: 1 !important;
     }
 
     .grid-metadados {
-        grid-template-columns: 1fr !important;
+        grid-template-columns: 1fr 1fr !important;
         gap: 8px !important;
         padding: 10px !important;
+        font-size: 0.82rem !important;
     }
 
-    .campos-explicacao {
-        grid-template-columns: 1fr !important;
-        gap: 12px !important;
-    }
-
-    /* 4. Manual 3D com escala proporcional à tela vertical */
+    /* Manual 3D: Perfeitamente centralizado na tela, sem cortar */
     .manual-wrapper-posicao {
-        right: 2% !important;
-        top: 6% !important;
-        transform: scale(0.42) !important;
-        transform-origin: top center !important;
+        position: fixed !important;
+        top: 50% !important;
+        left: 50% !important;
+        right: auto !important;
+        transform: translate(-50%, -50%) scale(0.42) !important;
+        transform-origin: center center !important;
     }
 }

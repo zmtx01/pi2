@@ -274,9 +274,15 @@
         </div>
     </div>
 
-    <div class="widget-acessibilidade" id="widget-acessibilidade">
+     <div class="widget-acessibilidade" id="widget-acessibilidade">
         <div class="caixa-gatilho-acessibilidade" id="gatilho-acessibilidade" tabindex="6" role="button" data-fala="Menu de Acessibilidade. Pressione Alt mais A para abrir.">
-            <div class="btn-icone-grande" id="container-icone">♿</div>
+            <!-- Ícone SVG Neon que não vira emoji no celular -->
+            <div class="btn-icone-grande" id="container-icone">
+                <svg width="34" height="34" viewBox="0 0 24 24" fill="currentColor">
+                    <circle cx="12" cy="4" r="2"/>
+                    <path d="M19 13v-2c-1.54.02-3.09-.75-4.07-1.83l-1.29-1.43c-.17-.19-.38-.34-.61-.45-.4-.2-.86-.29-1.32-.29H11c-.55 0-1 .45-1 1v4.5c0 .28.11.53.29.71L12.5 15.4V21h2v-6.2l-1.63-1.63.5-1.92c1.07 1.05 2.53 1.75 4.13 1.75H19zM6 13c0-2.76 2.24-5 5-5v-2C7.13 6 4 9.13 4 13s3.13 7 7 7v-2c-2.76 0-5-2.24-5-5z"/>
+                </svg>
+            </div>
             <div class="bloco-mensagens">
                 <span class="msg-linha1">ACESSIBILIDADE</span>
                 <span class="msg-linha2">[ALT + A]</span>
@@ -518,8 +524,18 @@
         btnTurno.id = 'btn-iniciar-turno';
         btnTurno.className = 'btn-iniciar-turno';
         btnTurno.tabIndex = 1;
-        btnTurno.setAttribute('data-fala', 'Botão: Pressione qualquer tecla ou clique para iniciar o seu turno...');
-        btnTurno.textContent = '[ Pressione qualquer tecla ou clique para iniciar o seu turno... ]';
+
+        // SE FOR CELULAR: Frase curta para caber perfeito na tela
+        // SE FOR COMPUTADOR: Mantém a frase clássica original intacta
+        const isMobile = window.innerWidth < 768 || ('ontouchstart' in window);
+        if (isMobile) {
+            btnTurno.setAttribute('data-fala', 'Botão: Clique para iniciar o seu turno...');
+            btnTurno.textContent = '[ Clique para iniciar o seu turno... ]';
+        } else {
+            btnTurno.setAttribute('data-fala', 'Botão: Pressione qualquer tecla ou clique para iniciar o seu turno...');
+            btnTurno.textContent = '[ Pressione qualquer tecla ou clique para iniciar o seu turno... ]';
+        }
+
         screen2.appendChild(btnTurno);
         btnTurno.focus();
 

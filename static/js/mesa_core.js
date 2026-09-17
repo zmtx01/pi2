@@ -241,19 +241,16 @@ function clicarTela() {
     const historico = document.getElementById('historico-linhas');
     const input = document.getElementById('prompt-input');
 
-    // 1. GARANTE QUE A LINHA C:\SEMAE\ATD-07> SEMPRE ESTEJA VISÍVEL DE PRIMEIRA
     if (areaInput && (!jogoAtivo || faseAtual < roteiroAtual.length)) {
         areaInput.style.display = 'flex';
         areaInput.style.opacity = '1';
     }
 
-    // 2. Se já estiver com o chamado ativo em progresso, inicia as fases
     if (progressoDoUsuario === 2 && !jogoAtivo) {
         iniciarTerminalJogo();
         return;
     }
 
-    // 3. Garante o texto inicial padrão no histórico caso não esteja em jogo
     if (!jogoAtivo && !modoMenuAcl && historico) {
         if (!historico.innerHTML.includes("Microsoft Windows")) {
             historico.innerHTML = `
@@ -261,17 +258,20 @@ function clicarTela() {
 Microsoft Windows [versão 10.0.19045]
 (c) Microsoft Corporation. Todos os direitos reservados.
 
-=======================================================
-               TERMINAL OPERACIONAL SEMAE
-=======================================================
-<div class="interacao-amarela" style="margin-top:40px;">Nenhum atendimento iniciado. Verifique seus chamados.</div>`;
+============================
+ TERMINAL OPERACIONAL SEMAE
+============================
+<div class="interacao-amarela" style="margin-top:30px;">Nenhum atendimento iniciado. Verifique seus chamados.</div>`;
         }
     }
 
-    // 4. Foca no campo de texto imediatamente
-    setTimeout(() => {
-        if (input && !input.disabled) input.focus();
-    }, 50);
+    // No computador foca o input de imediato; no celular NÃO foca para o teclado virtual não subir na frente
+    const isMobile = window.innerWidth < 768 || ('ontouchstart' in window);
+    if (!isMobile) {
+        setTimeout(() => {
+            if (input && !input.disabled) input.focus();
+        }, 50);
+    }
 }
 
 function fecharTela() {
@@ -795,9 +795,9 @@ async function iniciarTerminalJogo() {
 Microsoft Windows [versão 10.0.19045]
 (c) Microsoft Corporation. Todos os direitos reservados.
 
-=======================================================
-               TERMINAL OPERACIONAL SEMAE
-=======================================================`;
+============================
+ TERMINAL OPERACIONAL SEMAE
+============================`;
     historico.appendChild(header);
 
     // Garante que o ponteiro da fase esteja dentro dos limites válidos
