@@ -7,11 +7,11 @@ let chamadoAtivo = false;
 let chamadosAberto = false;
 let primeiraVisitaRealizada = false;
 
-let den2JaTocado = false;              // Garante que o GACHA só toque uma vez
-let temporizadorChamadoAuto = null;    // Gatilho de socorro de 6 segundos
+let den2JaTocado = false;
+let temporizadorChamadoAuto = null;
 
 let jogoAtivo = false;
-let modoMenuAcl = false; // Controle do menu interativo de acessibilidade no CMD
+let modoMenuAcl = false;
 let faseAtual = 0;
 let errosFase = 0;
 let errosTotaisNoDia = 0;
@@ -21,12 +21,13 @@ let progressoDoUsuario = window.location.protocol === 'file:' ? 0 : -1;
 let paginaAtual = 0;
 let paginasLiberadas = 1;
 let cadernoTravado = false;
+let encerrandoAtendimento = false;
 
 const nomeSalvoRaw = localStorage.getItem('nomeEstagiario');
 const nomeEstagiario = (nomeSalvoRaw || 'Estagiário').toUpperCase();
 let roteiroAtual = [];
 
-// LEITURA INSTANTÂNEA DA FASE SALVA (SEM ESPERAR REDE OU F5)
+// Leitura instantânea da fase salva sem esperar rede
 const faseSalvaLocal = localStorage.getItem(nomeEstagiario + '_fase_ativa');
 if (faseSalvaLocal !== null) {
     faseAtual = parseInt(faseSalvaLocal, 10);
@@ -34,11 +35,11 @@ if (faseSalvaLocal !== null) {
 
 const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
 
-// CONFIGURAÇÃO DOS EFEITOS SONOROS DO DEN DEN MUSHI
+// Áudios do Den Den Mushi
 const _caminhoAudio = (typeof _baseStatic !== 'undefined' ? _baseStatic : (window.location.protocol === 'file:' ? '../static/' : '/static/')) + 'audio/';
 const audioDen1 = new Audio(_caminhoAudio + 'den1.mp3');
 audioDen1.loop = true;
-audioDen1.volume = 0.45; // Volume confortável para não assustar no fone
+audioDen1.volume = 0.45;
 
 const audioDen2 = new Audio(_caminhoAudio + 'den2.mp3');
 audioDen2.volume = 0.55;
@@ -208,9 +209,7 @@ async function inicializarMesa() {
 
                 if (data.progresso === 2) {
                     primeiraVisitaRealizada = true;
-                    chamadoAtivo = true; // Chamado existe no sistema...
-                    
-                    // ...MAS A LUZ FICA APAGADA POIS JÁ FOI ATENDIDO!
+                    chamadoAtivo = true;
                     const luz = document.getElementById('luz-telefone');
                     if (luz) luz.classList.remove('ativa');
 
@@ -226,6 +225,8 @@ async function inicializarMesa() {
             progressoDoUsuario = 0;
         }
     }
+
+    // Gatilho de socorro: toca sozinho após 6 segundos se for novo jogador
     if (progressoDoUsuario < 2 && !chamadoAtivo) {
         if (temporizadorChamadoAuto) clearTimeout(temporizadorChamadoAuto);
         temporizadorChamadoAuto = setTimeout(() => {
@@ -237,7 +238,7 @@ async function inicializarMesa() {
 }
 
 
-
+// 3. CONTROLE DE JANELAS E FOCO
 function clicarTela() {
     fecharArquivos();
     fecharChamados();
@@ -271,7 +272,6 @@ function clicarTela() {
         return;
     }
 
-    // Régua de 16 '=' no celular e 55 '=' no computador
     const isMobile = window.innerWidth < 768 || ('ontouchstart' in window);
     const divisoriaCmd = isMobile ? "================" : "=======================================================";
     const tituloTerminal = isMobile ? "TERMINAL SEMAE" : "       TERMINAL OPERACIONAL SEMAE";
@@ -290,7 +290,6 @@ ${divisoriaCmd}
         }
     }
 
-    // No computador foca o input de imediato; no celular NÃO foca para o teclado virtual não subir na frente
     if (!isMobile) {
         setTimeout(() => {
             if (input && !input.disabled) input.focus();
@@ -335,7 +334,6 @@ function fecharArquivos() {
 
 // 4. SISTEMA DE CHAMADOS
 function clicarChamados() {
-    // Só toca o den2 (GACHA) se o telefone estava tocando e ainda não foi atendido
     if (chamadoAtivo && !den2JaTocado) {
         den2JaTocado = true;
         try {
@@ -359,13 +357,7 @@ function clicarChamados() {
 function fecharChamados() {
     document.getElementById('chamados-backdrop').style.display = 'none';
 
-    // Para o toque se a janela for fechada
-    try {
-        audioDen1.pause();
-        audioDen1.currentTime = 0;
-    } catch (e) {}
-
-    // GATILHO 1: Se clicou e fechou pela primeira vez, chama em 2 segundos
+    // Gatilho 1: Se fechou na primeira visita, toca em 2 segundos
     if (chamadosAberto && !primeiraVisitaRealizada && !chamadoAtivo && progressoDoUsuario < 2) {
         primeiraVisitaRealizada = true;
         if (temporizadorChamadoAuto) clearTimeout(temporizadorChamadoAuto);
@@ -378,67 +370,29 @@ function acenderLuzChamado() {
     if (chamadoAtivo || progressoDoUsuario >= 2) return;
 
     chamadoAtivo = true;
-    den2JaTocado = false; // Pronto para tocar o Gacha quando for atendido
+    den2JaTocado = false;
 
-    // Cancela o timer de 6s para não duplicar chamadas
     if (temporizadorChamadoAuto) clearTimeout(temporizadorChamadoAuto);
 
     const luz = document.getElementById('luz-telefone');
     if (luz) luz.classList.add('ativa');
 
-    // SE A TELA JÁ ESTIVER ABERTA, ATUALIZA EM TEMPO REAL NA FRENTE DO JOGADOR!
     if (chamadosAberto) {
         montarPainelChamadoAtivo();
     }
 
-    // Toca o den1 em loop contínuo
     try {
         audioDen1.currentTime = 0;
         audioDen1.play().catch(() => {});
     } catch (e) {}
 }
 
-function fecharChamados() {
-    document.getElementById('chamados-backdrop').style.display = 'none';
-
-    // Garante que o som do toque não fique tocando se a janela for fechada
-    try {
-        audioDen1.pause();
-        audioDen1.currentTime = 0;
-    } catch (e) {}
-
-    if (chamadosAberto && !primeiraVisitaRealizada) {
-        primeiraVisitaRealizada = true;
-        setTimeout(() => acenderLuzChamado(), 2000);
-    }
-    chamadosAberto = false;
-}
-
-function acenderLuzChamado() {
-    chamadoAtivo = true;
-    const luz = document.getElementById('luz-telefone');
-    if (luz) luz.classList.add('ativa');
-    montarPainelChamadoAtivo();
-
-    // Inicia o toque em loop do Den Den Mushi junto com a luz piscando
-    try {
-        audioDen1.currentTime = 0;
-        audioDen1.play().catch(() => {
-            console.log("Áudio bloqueado pelo navegador até o primeiro clique.");
-        });
-    } catch (e) {}
-}
-
-// =========================================================
-// static/js/mesa_core.js -> Seção 4: montarPainelChamadoAtivo()
-// =========================================================
 function montarPainelChamadoAtivo() {
     const sidebarLista = document.getElementById('sidebar-lista');
     const painelPrincipal = document.getElementById('painel-chamados-conteudo');
 
     if (!sidebarLista || !painelPrincipal) return;
 
-    // Resgate seguro dos metadados do chamado
     const chamado = (typeof chamadoDia1 !== 'undefined') ? chamadoDia1 : (window.chamadoDia1 || {
         codigo: "SE-CTI-26-0001",
         assunto: "Diagnóstico básico da estação de trabalho",
@@ -450,7 +404,6 @@ function montarPainelChamadoAtivo() {
         supervisor: "Marcos Almeida"
     });
 
-    // Identificação dos 3 estados possíveis do chamado
     const isConcluido = (progressoDoUsuario >= 3);
     const isEmAndamento = (progressoDoUsuario === 2 || faseAtual > 0);
 
@@ -468,7 +421,6 @@ function montarPainelChamadoAtivo() {
         bgStatus = 'rgba(255, 159, 28, 0.2)';
     }
 
-    // 1. Atualiza a barra lateral
     sidebarLista.innerHTML = `
         <div class="item-chamado" id="item-chamado-sidebar" tabindex="0">
             <span class="item-status" id="badge-sidebar" style="background-color: ${bgStatus}; color: ${corStatus}; border-color: ${corStatus};">${textoStatus}</span>
@@ -477,7 +429,6 @@ function montarPainelChamadoAtivo() {
         </div>
     `;
 
-    // 2. Decide qual botão exibir na base da janela
     let botoesAcaoHtml = '';
     if (isConcluido) {
         botoesAcaoHtml = `
@@ -492,7 +443,6 @@ function montarPainelChamadoAtivo() {
         botoesAcaoHtml = `<button class="btn-iniciar-atendimento" id="btn-iniciar-jogo" tabindex="0" onclick="iniciarTerminalJogo()">[ INICIAR ATENDIMENTO ]</button>`;
     }
 
-    // 3. Monta o corpo completo do painel de chamados
     painelPrincipal.innerHTML = `
         <div class="cabecalho-chamado" id="secao-cabecalho-chamado" tabindex="0">
             <div>
@@ -663,7 +613,7 @@ async function mudarPaginaCaderno(direcao) {
     cadernoTravado = false;
 }
 
-// GESTO DE FOLHEAR POR DESLIZE (SWIPE) NO CELULAR
+// Gesto tátil de deslizar (swipe) para folhear no celular
 let touchManualStartX = 0;
 let touchManualStartY = 0;
 
@@ -685,20 +635,15 @@ window.addEventListener('DOMContentLoaded', () => {
             const deltaX = touchEndX - touchManualStartX;
             const deltaY = touchEndY - touchManualStartY;
 
-            // Trava: SÓ vira a página se estiver na escala normal (sem zoom ativo)
             const semZoom = !window.visualViewport || Math.abs(window.visualViewport.scale - 1) < 0.15;
 
-            // Identifica um arraste horizontal nítido (mais de 45px de deslocamento)
             if (semZoom && Math.abs(deltaX) > 45 && Math.abs(deltaX) > Math.abs(deltaY) * 1.5) {
                 if (deltaX < 0) {
-                    // Deslizou para a esquerda (←): avança para a próxima folha
                     mudarPaginaCaderno(1);
                 } else {
-                    // Deslizou para a direita (→): volta para a folha anterior
                     mudarPaginaCaderno(-1);
                 }
 
-                // Se a acessibilidade estiver ligada, narra a nova página
                 if (typeof narrarTituloCaderno === 'function') {
                     narrarTituloCaderno();
                 }
@@ -707,7 +652,8 @@ window.addEventListener('DOMContentLoaded', () => {
     }, { passive: true });
 });
 
-// 6. MOTOR DO TERMINAL, REVER, REFAZER E COMANDO ACL_ON
+
+// 6. MOTOR DO TERMINAL, REVER, REFAZER E ACL_ON
 function normalizarTexto(txt) {
     if (!txt) return "";
     return txt.toLowerCase()
@@ -742,7 +688,6 @@ async function escreverNoTerminal(texto) {
     }
 }
 
-// MENU INTERATIVO DE ACESSIBILIDADE VIA TERMINAL (ACL_ON)
 function exibirMenuAcl() {
     modoMenuAcl = true;
     const historico = document.getElementById('historico-linhas');
@@ -751,7 +696,6 @@ function exibirMenuAcl() {
     const tecladoAtivo = localStorage.getItem('a11y_teclado') === 'true';
     const iconesAtivos = localStorage.getItem('a11y_icones') === 'true';
 
-    // 16 '=' no celular e 55 '=' no computador
     const isMobileMenu = window.innerWidth < 768 || ('ontouchstart' in window);
     const divAcl = isMobileMenu ? "================" : "=======================================================";
     const titAcl = isMobileMenu ? " PAINEL DE ACESSIBILIDADE" : "              PAINEL DE ACESSIBILIDADE (ACL)";
@@ -846,7 +790,6 @@ async function reverAtendimento() {
     historico.innerHTML = "";
     if (areaInput) areaInput.style.display = 'none';
 
-    // 16 '=' no celular e 55 '=' no computador
     const isMobileRev = window.innerWidth < 768 || ('ontouchstart' in window);
     const divRev = isMobileRev ? "================" : "=======================================================";
     const titRev = isMobileRev ? " REVISÃO SE-CTI" : "         REVISÃO DE ATENDIMENTO — SE-CTI-26-0001";
@@ -894,7 +837,6 @@ ${divRev}`;
 }
 
 async function iniciarTerminalJogo() {
-    // Só bloqueia caso o terminal esteja no meio de uma animação de digitação
     if (digitando) return;
 
     garantirRoteiroCarregado();
@@ -903,7 +845,6 @@ async function iniciarTerminalJogo() {
     errosTotaisNoDia = 0;
     fecharChamados();
 
-    // Apaga a luz pulsante do telefone e para o toque do Den Den Mushi
     const luz = document.getElementById('luz-telefone');
     if (luz) luz.classList.remove('ativa');
     chamadoAtivo = false;
@@ -913,10 +854,8 @@ async function iniciarTerminalJogo() {
         audioDen1.currentTime = 0;
     } catch(e) {}
 
-    // Abre a tela do terminal
     clicarTela();
 
-    // Sincroniza com o banco que o chamado foi iniciado (Progresso 2)
     if (window.location.protocol !== 'file:' && progressoDoUsuario < 2) {
         fetch('/api/save-score', {
             method: 'POST',
@@ -937,12 +876,10 @@ async function iniciarTerminalJogo() {
     input.disabled = true;
     areaInput.style.opacity = '.3';
 
-    // 1. Régua adaptada: 16 '=' no celular e 55 '=' no computador
     const isMobile = window.innerWidth < 768 || ('ontouchstart' in window);
     const divisoriaCmd = isMobile ? "================" : "=======================================================";
     const tituloTerminal = isMobile ? "TERMINAL SEMAE" : "       TERMINAL OPERACIONAL SEMAE";
 
-    // Imprime o cabeçalho oficial do Windows
     const header = document.createElement('div');
     header.innerHTML = `
 <div class="aviso-azul-acl" style="color: #38bdf8; margin-bottom: 12px; font-weight: bold;">Para ativar a acessibilidade utilize o comando ACL_ON no terminal.</div>
@@ -954,10 +891,8 @@ ${tituloTerminal}
 ${divisoriaCmd}`;
     historico.appendChild(header);
 
-    // Garante que o ponteiro da fase esteja dentro dos limites válidos
     faseAtual = Math.min(Math.max(0, faseAtual), roteiroAtual.length - 1);
 
-    // RECONSTRUÇÃO: Se você parou na fase 3 ou superior, imprime o passado em verde
     if (faseAtual > 0 && roteiroAtual.length > 0) {
         for (let i = 0; i < faseAtual; i++) {
             const f = roteiroAtual[i];
@@ -982,7 +917,6 @@ ${divisoriaCmd}`;
             historico.appendChild(spacer);
         }
 
-        // Libera as páginas do manual correspondentes ao progresso recuperado
         if (faseAtual >= 1) paginasLiberadas = Math.max(paginasLiberadas, 3);
         if (faseAtual >= 3) paginasLiberadas = Math.max(paginasLiberadas, 4);
         if (faseAtual >= 5) paginasLiberadas = Math.max(paginasLiberadas, 5);
@@ -990,7 +924,6 @@ ${divisoriaCmd}`;
         if (faseAtual >= 8) paginasLiberadas = Math.max(paginasLiberadas, 7);
     }
 
-    // Imprime a tarefa da fase exata onde o jogador parou
     if (roteiroAtual && faseAtual < roteiroAtual.length) {
         await escreverNoTerminal(roteiroAtual[faseAtual].prompt);
         if (typeof narrarTerminalA11y === 'function') {
@@ -1002,7 +935,6 @@ ${divisoriaCmd}`;
     input.disabled = false;
     areaInput.style.opacity = '1';
 
-    // 2. No computador foca na hora; no celular NÃO foca para o teclado não subir na frente
     if (!isMobile) {
         input.focus();
     }
@@ -1050,8 +982,6 @@ async function avancarFaseJogo() {
     }
 }
 
-let encerrandoAtendimento = false;
-
 function encerrarDia() {
     if (encerrandoAtendimento) return;
     encerrandoAtendimento = true;
@@ -1066,7 +996,6 @@ function encerrarDia() {
     fecharTela();
     clicarChamados();
 
-    // Libera a trava após 1 segundo caso ele queira rever novamente
     setTimeout(() => { encerrandoAtendimento = false; }, 1000);
 }
 
@@ -1121,7 +1050,6 @@ window.addEventListener('DOMContentLoaded', () => {
             const cmdLimpo = bruto.trim().toLowerCase();
             if (!bruto.trim()) return;
 
-            // 1. PROCESSAMENTO DE OPÇÃO DENTRO DO MENU ACL_ON
             if (modoMenuAcl) {
                 const divCmd = document.createElement('div');
                 divCmd.innerHTML = `C:\\SEMAE\\ATD-07&gt; <span style="color:#fff;">${bruto}</span>`;
@@ -1132,7 +1060,6 @@ window.addEventListener('DOMContentLoaded', () => {
                 return;
             }
 
-            // 2. COMANDO PARA ATIVAR O MENU DE ACESSIBILIDADE
             if (cmdLimpo === 'acl_on') {
                 const divCmd = document.createElement('div');
                 divCmd.innerHTML = `C:\\SEMAE\\ATD-07&gt; <span style="color:#fff;">${bruto}</span>`;
@@ -1143,7 +1070,6 @@ window.addEventListener('DOMContentLoaded', () => {
                 return;
             }
 
-            // 3. COMANDOS GLOBAIS DO TERMINAL
             if (cmdLimpo === 'ranking') {
                 window.location.href = window.location.protocol === 'file:' ? 'ranking.html' : '/pi2/ranking';
                 this.value = "";
@@ -1158,42 +1084,38 @@ window.addEventListener('DOMContentLoaded', () => {
             }
 
             if (cmdLimpo === 'reset_all' || cmdLimpo === 'reset-all') {
-            this.value = "";
-            if (ghostText) ghostText.innerHTML = "";
+                this.value = "";
+                if (ghostText) ghostText.innerHTML = "";
 
-            const divCmd = document.createElement('div');
-            divCmd.innerHTML = `C:\\SEMAE\\ATD-07&gt; <span style="color:#fff;">${bruto}</span>`;
-            historico.appendChild(divCmd);
+                const divCmd = document.createElement('div');
+                divCmd.innerHTML = `C:\\SEMAE\\ATD-07&gt; <span style="color:#fff;">${bruto}</span>`;
+                historico.appendChild(divCmd);
 
-            const divAviso = document.createElement('div');
-            divAviso.className = "transicao-verde";
-            divAviso.style.margin = "10px 0";
-            divAviso.innerText = "[SISTEMA] Resetando todas as configurações locais, conquistas e progresso...";
-            historico.appendChild(divAviso);
-            rolarTerminalAbaixo();
+                const divAviso = document.createElement('div');
+                divAviso.className = "transicao-verde";
+                divAviso.style.margin = "10px 0";
+                divAviso.innerText = "[SISTEMA] Resetando todas as configurações locais, conquistas e progresso...";
+                historico.appendChild(divAviso);
+                rolarTerminalAbaixo();
 
-            // 1. Limpa todas as chaves do navegador
-            localStorage.clear();
+                localStorage.clear();
 
-            // 2. Se estiver online (Flask/Render), zera o progresso do banco
-            if (window.location.protocol !== 'file:') {
-                try {
-                    await fetch('/api/reset-my-progress', { method: 'POST' });
-                } catch (e) {}
-            }
-
-            // 3. Retorna para a tela 1 (Index)
-            setTimeout(() => {
-                if (window.location.protocol === 'file:') {
-                    window.location.href = 'index.html';
-                } else {
-                    window.location.href = '/pi2';
+                if (window.location.protocol !== 'file:') {
+                    try {
+                        await fetch('/api/reset-my-progress', { method: 'POST' });
+                    } catch (e) {}
                 }
-            }, 1000);
-            return;
+
+                setTimeout(() => {
+                    if (window.location.protocol === 'file:') {
+                        window.location.href = 'index.html';
+                    } else {
+                        window.location.href = '/pi2';
+                    }
+                }, 1000);
+                return;
             }
 
-            // 4. SE O ATENDIMENTO NÃO COMEÇOU, MENSAGEM PADRÃO
             if (!jogoAtivo) {
                 const divCmd = document.createElement('div');
                 divCmd.innerHTML = `C:\\SEMAE\\ATD-07&gt; <span style="color:#fff;">${bruto}</span>`;
@@ -1212,7 +1134,6 @@ window.addEventListener('DOMContentLoaded', () => {
                 return;
             }
 
-            // 5. JOGO EM ATENDIMENTO
             garantirRoteiroCarregado();
             const f = (roteiroAtual && roteiroAtual[faseAtual]) ? roteiroAtual[faseAtual] : null;
 
