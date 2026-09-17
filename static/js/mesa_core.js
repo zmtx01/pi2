@@ -7,6 +7,9 @@ let chamadoAtivo = false;
 let chamadosAberto = false;
 let primeiraVisitaRealizada = false;
 
+let den2JaTocado = false;              // Garante que o GACHA só toque uma vez
+let temporizadorChamadoAuto = null;    // Gatilho de socorro de 6 segundos
+
 let jogoAtivo = false;
 let modoMenuAcl = false; // Controle do menu interativo de acessibilidade no CMD
 let faseAtual = 0;
@@ -223,6 +226,14 @@ async function inicializarMesa() {
             progressoDoUsuario = 0;
         }
     }
+    if (progressoDoUsuario < 2 && !chamadoAtivo) {
+        if (temporizadorChamadoAuto) clearTimeout(temporizadorChamadoAuto);
+        temporizadorChamadoAuto = setTimeout(() => {
+            if (!chamadoAtivo && progressoDoUsuario < 2) {
+                acenderLuzChamado();
+            }
+        }, 6000);
+    }
 }
 
 
@@ -324,8 +335,9 @@ function fecharArquivos() {
 
 // 4. SISTEMA DE CHAMADOS
 function clicarChamados() {
-    // Se o telefone estava tocando, corta o den1 e toca o GACHA (den2) na hora!
-    if (chamadoAtivo) {
+    // Só toca o den2 (GACHA) se o telefone estava tocando e ainda não foi atendido
+    if (chamadoAtivo && !den2JaTocado) {
+        den2JaTocado = true;
         try {
             audioDen1.pause();
             audioDen1.currentTime = 0;
@@ -342,6 +354,48 @@ function clicarChamados() {
     if (chamadoAtivo || progressoDoUsuario >= 2) {
         montarPainelChamadoAtivo();
     }
+}
+
+function fecharChamados() {
+    document.getElementById('chamados-backdrop').style.display = 'none';
+
+    // Para o toque se a janela for fechada
+    try {
+        audioDen1.pause();
+        audioDen1.currentTime = 0;
+    } catch (e) {}
+
+    // GATILHO 1: Se clicou e fechou pela primeira vez, chama em 2 segundos
+    if (chamadosAberto && !primeiraVisitaRealizada && !chamadoAtivo && progressoDoUsuario < 2) {
+        primeiraVisitaRealizada = true;
+        if (temporizadorChamadoAuto) clearTimeout(temporizadorChamadoAuto);
+        setTimeout(() => acenderLuzChamado(), 2000);
+    }
+    chamadosAberto = false;
+}
+
+function acenderLuzChamado() {
+    if (chamadoAtivo || progressoDoUsuario >= 2) return;
+
+    chamadoAtivo = true;
+    den2JaTocado = false; // Pronto para tocar o Gacha quando for atendido
+
+    // Cancela o timer de 6s para não duplicar chamadas
+    if (temporizadorChamadoAuto) clearTimeout(temporizadorChamadoAuto);
+
+    const luz = document.getElementById('luz-telefone');
+    if (luz) luz.classList.add('ativa');
+
+    // SE A TELA JÁ ESTIVER ABERTA, ATUALIZA EM TEMPO REAL NA FRENTE DO JOGADOR!
+    if (chamadosAberto) {
+        montarPainelChamadoAtivo();
+    }
+
+    // Toca o den1 em loop contínuo
+    try {
+        audioDen1.currentTime = 0;
+        audioDen1.play().catch(() => {});
+    } catch (e) {}
 }
 
 function fecharChamados() {
