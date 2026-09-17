@@ -69,12 +69,11 @@ body {
     align-items: center;
     justify-content: center;
     transition: background-color 0.2s, outline 0.2s, border-color 0.2s;
-    border: 2px solid transparent; /* Invisível por padrão */
+    border: 2px solid transparent;
     border-radius: 6px;
     background-color: transparent;
 }
 
-/* A etiqueta só aparece se a acessibilidade visual for ligada */
 .hitbox .tag-hitbox {
     display: none;
     background: rgba(0, 0, 0, 0.75);
@@ -89,7 +88,7 @@ body {
     transition: color 0.2s, border-color 0.2s, background-color 0.2s;
 }
 
-/* QUANDO ACESSIBILIDADE ESTIVER ATIVA: Revela borda e etiquetas */
+/* Revela borda e etiquetas apenas quando acessibilidade estiver ativa */
 body.icones-ativos .hitbox,
 body.teclado-ativo .hitbox {
     border-color: #ffffff;
@@ -101,7 +100,6 @@ body.teclado-ativo .hitbox .tag-hitbox {
     display: inline-block; 
 }
 
-/* Hover e Clique do mouse: SÓ aparece se acessibilidade visual ou teclado estiver ativa */
 body.icones-ativos .hitbox:hover,
 body.icones-ativos .hitbox:active,
 body.teclado-ativo .hitbox:hover,
@@ -120,7 +118,6 @@ body.teclado-ativo .hitbox:active .tag-hitbox {
     border-color: #45CF8A;
 }
 
-/* Foco de seleção: SÓ aparece se a acessibilidade de teclado estiver ativa */
 body.teclado-ativo .hitbox:focus,
 body.teclado-ativo .hitbox.foco-pagina,
 body.icones-ativos .hitbox.foco-pagina {
@@ -137,14 +134,12 @@ body.icones-ativos .hitbox.foco-pagina .tag-hitbox {
     color: #FF9F1C !important;
 }
 
-/* Sem acessibilidade ativa, o clique com o mouse não desenha nenhuma borda ou fundo */
 .hitbox:focus {
     outline: none !important;
     background-color: transparent !important;
     border-color: transparent !important;
 }
 
-/* Coordenadas exatas originais */
 #hitbox-tela {
     top: 5%;
     left: 25%;
@@ -173,7 +168,6 @@ body.icones-ativos .hitbox.foco-pagina .tag-hitbox {
     height: 30%;
 }
 
-/* Luz decorativa do telefone */
 #luz-telefone {
     position: absolute;
     top: 54%;
@@ -562,7 +556,6 @@ body.teclado-ativo .instrucao-texto:focus {
     flex-direction: column;
 }
 
-/* Telas de boas-vindas do chamado */
 .tela-boas-vindas {
     display: flex;
     flex-direction: column;
@@ -942,55 +935,8 @@ body.teclado-ativo .instrucao-texto:focus {
     background-color: rgba(255, 159, 28, 0.2) !important;
 }
 
-@media (max-width: 768px) {
-    body {
-        overflow: auto !important; /* Libera o arraste livre com o dedo */
-        touch-action: pan-x pan-y pinch-zoom !important; /* Libera pinça de zoom */
-        padding: 10px;
-        align-items: flex-start;
-        height: auto;
-        min-height: 100vh;
-    }
 
-    .sala-container {
-        margin: 20px auto 80px auto;
-    }
-
-    /* Texto da base fluido: quebra linha e não corta à esquerda */
-    .instrucao-texto {
-        bottom: -55px;
-        white-space: normal !important;
-        width: 90vw !important;
-        max-width: 90vw !important;
-        font-size: 1rem;
-        line-height: 1.4;
-    }
-
-    /* Modais com formato equilibrado no visor vertical */
-    .cmd-janela,
-    .navegador-container {
-        width: 96vw;
-        min-width: 330px;
-        max-height: 85vh;
-        transform: none !important;
-    }
-
-    .cmd-corpo,
-    .conteudo-web {
-        height: auto;
-        max-height: 60vh;
-    }
-
-    /* Escala do manual para caber melhor na tela vertical */
-    .manual-wrapper-posicao {
-        right: 2%;
-        top: 6%;
-        transform: scale(0.42) !important;
-        transform-origin: top center;
-    }
-}
-
-/* 8. RESPONSIVIDADE */
+/* 8. RESPONSIVIDADE DESKTOP POR ALTURA */
 @media (max-height: 1100px) {
     .manual-wrapper-posicao {
         transform: scale(0.8);
@@ -1017,5 +963,124 @@ body.teclado-ativo .instrucao-texto:focus {
     .cmd-janela, .navegador-container {
         transform: scale(0.7);
         transform-origin: center;
+    }
+}
+
+
+/* 9. RESPONSIVIDADE MOBILE: CENTRALIZAÇÃO, PROPORÇÕES E SEM ROLAGEM LATERAL */
+@media (max-width: 768px) {
+    /* 1. Centraliza a mesa perfeitamente no meio da tela */
+    body {
+        display: flex !important;
+        justify-content: center !important;
+        align-items: center !important;
+        min-height: 100vh !important;
+        height: auto !important;
+        overflow: auto !important; /* Libera o arraste com o dedo e zoom */
+        touch-action: pan-x pan-y pinch-zoom !important;
+        padding: 20px 10px !important;
+        box-sizing: border-box !important;
+    }
+
+    .sala-container {
+        margin: auto !important;
+        top: 0 !important;
+    }
+
+    /* Texto da base fluido e centralizado */
+    .instrucao-texto {
+        bottom: -55px !important;
+        white-space: normal !important;
+        width: 90vw !important;
+        max-width: 90vw !important;
+        font-size: 1rem !important;
+        line-height: 1.4 !important;
+        text-align: center !important;
+    }
+
+    /* 2. Terminal CMD com proporção de janela de desktop (sem rolagem horizontal) */
+    .cmd-janela {
+        width: 94vw !important;
+        max-width: 600px !important;
+        height: auto !important;
+        max-height: 82vh !important;
+        transform: none !important;
+    }
+
+    .cmd-corpo {
+        padding: 20px 15px !important;
+        height: 460px !important;
+        max-height: 62vh !important;
+    }
+
+    .historico-terminal {
+        font-size: 0.95rem !important;
+        line-height: 1.4 !important;
+        white-space: pre-wrap !important;
+        word-break: break-word !important;
+        overflow-x: hidden !important; /* Elimina barra horizontal no terminal */
+    }
+
+    .linha-input {
+        font-size: 0.95rem !important;
+        padding-top: 12px !important;
+    }
+
+    .campo-entrada, #ghost-text {
+        font-size: 0.95rem !important;
+    }
+
+    /* 3. Telefone/Chamados organizado e fluido sem corte lateral */
+    .navegador-container {
+        width: 94vw !important;
+        max-width: 620px !important;
+        max-height: 84vh !important;
+        transform: none !important;
+    }
+
+    .conteudo-web {
+        flex-direction: column !important; /* Sidebar acima do conteúdo no celular */
+        height: auto !important;
+        max-height: 68vh !important;
+        overflow-y: auto !important;
+        overflow-x: hidden !important;
+    }
+
+    .sidebar-chamados {
+        width: 100% !important;
+        border-right: none !important;
+        border-bottom: 2px solid var(--cor-borda) !important;
+    }
+
+    .sidebar-titulo {
+        padding: 10px 15px !important;
+    }
+
+    .item-chamado {
+        padding: 10px 15px !important;
+    }
+
+    .painel-principal {
+        padding: 20px 15px !important;
+        overflow-x: hidden !important;
+    }
+
+    .grid-metadados {
+        grid-template-columns: 1fr !important;
+        gap: 8px !important;
+        padding: 10px !important;
+    }
+
+    .campos-explicacao {
+        grid-template-columns: 1fr !important;
+        gap: 12px !important;
+    }
+
+    /* 4. Manual 3D com escala proporcional à tela vertical */
+    .manual-wrapper-posicao {
+        right: 2% !important;
+        top: 6% !important;
+        transform: scale(0.42) !important;
+        transform-origin: top center !important;
     }
 }
