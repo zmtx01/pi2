@@ -1019,42 +1019,55 @@ body.teclado-ativo .instrucao-texto:focus {
         overflow-x: hidden !important;
     }
 
-    /* Telefone/Chamados: Mantém a estrutura de 2 colunas proporcional e o botão [X] visível */
+    /* Telefone/Chamados: Amplo no estilo do Manual (840px), 2 colunas e sem barra na 2ª coluna */
+    .chamados-backdrop {
+        overflow: auto !important;
+        -webkit-overflow-scrolling: touch;
+        padding: 20px 10px !important;
+        display: none;
+        align-items: center !important;
+        justify-content: center !important;
+    }
+
     .navegador-container {
-        width: 96vw !important;
-        max-width: 800px !important;
+        width: 840px !important; /* Mesma largura sólida do manual */
+        min-width: 840px !important;
         height: auto !important;
-        max-height: 85vh !important;
-        transform: none !important;
+        max-height: 90vh !important;
+        transform: scale(0.44) !important; /* Encaixa perfeitamente mantendo o visual de PC */
+        transform-origin: center center !important;
+        margin: auto !important;
     }
 
     .navegador-topo {
-        padding: 10px 15px !important;
+        padding: 10px 18px !important;
     }
 
     .conteudo-web {
         display: flex !important;
-        flex-direction: row !important; /* Preserva as 2 colunas originais */
+        flex-direction: row !important; /* Mantém as 2 colunas originais intactas */
         height: 520px !important;
-        max-height: 70vh !important;
-        overflow: auto !important;
+        overflow: hidden !important;
     }
 
     .sidebar-chamados {
-        width: 220px !important; /* Sidebar compacta proporcional */
+        width: 280px !important;
         flex-shrink: 0 !important;
+        border-right: 2px solid var(--cor-borda) !important;
+        border-bottom: none !important;
     }
 
     .painel-principal {
-        padding: 20px 15px !important;
+        padding: 25px 30px !important;
         flex-grow: 1 !important;
+        overflow-y: auto !important;
+        overflow-x: hidden !important; /* ELIMINA A BARRA HORIZONTAL NA 2ª COLUNA */
     }
 
     .grid-metadados {
         grid-template-columns: 1fr 1fr !important;
-        gap: 8px !important;
-        padding: 10px !important;
-        font-size: 0.82rem !important;
+        gap: 10px !important;
+        padding: 12px !important;
     }
 
     /* Manual 3D: Perfeitamente centralizado na tela, sem cortar */

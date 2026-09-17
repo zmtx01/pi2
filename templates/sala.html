@@ -231,6 +231,11 @@
 
         let redirecionandoMesa = false;
 
+        // Destrava o clique automaticamente ao voltar pelo botão do celular
+        window.addEventListener('pageshow', () => {
+            redirecionandoMesa = false;
+        });
+
         function clicarMesa() {
             if (redirecionandoMesa) return;
             redirecionandoMesa = true;

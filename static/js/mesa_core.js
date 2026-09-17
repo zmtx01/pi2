@@ -217,7 +217,7 @@ async function inicializarMesa() {
 }
 
 
-// 3. CONTROLE DE JANELAS E FOCO
+
 function clicarTela() {
     fecharArquivos();
     fecharChamados();
@@ -251,6 +251,11 @@ function clicarTela() {
         return;
     }
 
+    // Régua de 16 '=' no celular e 55 '=' no computador
+    const isMobile = window.innerWidth < 768 || ('ontouchstart' in window);
+    const divisoriaCmd = isMobile ? "================" : "=======================================================";
+    const tituloTerminal = isMobile ? "TERMINAL SEMAE" : "       TERMINAL OPERACIONAL SEMAE";
+
     if (!jogoAtivo && !modoMenuAcl && historico) {
         if (!historico.innerHTML.includes("Microsoft Windows")) {
             historico.innerHTML = `
@@ -258,15 +263,14 @@ function clicarTela() {
 Microsoft Windows [versão 10.0.19045]
 (c) Microsoft Corporation. Todos os direitos reservados.
 
-============================
- TERMINAL OPERACIONAL SEMAE
-============================
+${divisoriaCmd}
+${tituloTerminal}
+${divisoriaCmd}
 <div class="interacao-amarela" style="margin-top:30px;">Nenhum atendimento iniciado. Verifique seus chamados.</div>`;
         }
     }
 
     // No computador foca o input de imediato; no celular NÃO foca para o teclado virtual não subir na frente
-    const isMobile = window.innerWidth < 768 || ('ontouchstart' in window);
     if (!isMobile) {
         setTimeout(() => {
             if (input && !input.disabled) input.focus();
@@ -788,6 +792,11 @@ async function iniciarTerminalJogo() {
     input.disabled = true;
     areaInput.style.opacity = '.3';
 
+    // 1. Régua de 16 '=' no celular e 55 '=' no computador
+    const isMobile = window.innerWidth < 768 || ('ontouchstart' in window);
+    const divisoriaCmd = isMobile ? "================" : "=======================================================";
+    const tituloTerminal = isMobile ? "TERMINAL SEMAE" : "       TERMINAL OPERACIONAL SEMAE";
+
     // Imprime o cabeçalho oficial do Windows
     const header = document.createElement('div');
     header.innerHTML = `
@@ -795,9 +804,9 @@ async function iniciarTerminalJogo() {
 Microsoft Windows [versão 10.0.19045]
 (c) Microsoft Corporation. Todos os direitos reservados.
 
-============================
- TERMINAL OPERACIONAL SEMAE
-============================`;
+${divisoriaCmd}
+${tituloTerminal}
+${divisoriaCmd}`;
     historico.appendChild(header);
 
     // Garante que o ponteiro da fase esteja dentro dos limites válidos
@@ -847,7 +856,11 @@ Microsoft Windows [versão 10.0.19045]
     digitando = false;
     input.disabled = false;
     areaInput.style.opacity = '1';
-    input.focus();
+
+    // 2. No computador foca na hora; no celular NÃO foca para o teclado virtual não subir na frente
+    if (!isMobile) {
+        input.focus();
+    }
 }
 
 async function avancarFaseJogo() {
