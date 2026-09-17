@@ -31,6 +31,15 @@ if (faseSalvaLocal !== null) {
 
 const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
 
+// CONFIGURAÇÃO DOS EFEITOS SONOROS DO DEN DEN MUSHI
+const _caminhoAudio = (typeof _baseStatic !== 'undefined' ? _baseStatic : (window.location.protocol === 'file:' ? '../static/' : '/static/')) + 'audio/';
+const audioDen1 = new Audio(_caminhoAudio + 'den1.mp3');
+audioDen1.loop = true;
+audioDen1.volume = 0.45; // Volume confortável para não assustar no fone
+
+const audioDen2 = new Audio(_caminhoAudio + 'den2.mp3');
+audioDen2.volume = 0.55;
+
 function carregarCartuchoNativoDia1(nome) {
     const nomeUpper = (nome || 'ESTAGIÁRIO').toUpperCase();
     return [
@@ -315,6 +324,16 @@ function fecharArquivos() {
 
 // 4. SISTEMA DE CHAMADOS
 function clicarChamados() {
+    // Se o telefone estava tocando, corta o den1 e toca o GACHA (den2) na hora!
+    if (chamadoAtivo) {
+        try {
+            audioDen1.pause();
+            audioDen1.currentTime = 0;
+            audioDen2.currentTime = 0;
+            audioDen2.play().catch(() => {});
+        } catch (e) {}
+    }
+
     fecharTela();
     fecharManual();
     chamadosAberto = true;
@@ -328,6 +347,12 @@ function clicarChamados() {
 function fecharChamados() {
     document.getElementById('chamados-backdrop').style.display = 'none';
 
+    // Garante que o som do toque não fique tocando se a janela for fechada
+    try {
+        audioDen1.pause();
+        audioDen1.currentTime = 0;
+    } catch (e) {}
+
     if (chamadosAberto && !primeiraVisitaRealizada) {
         primeiraVisitaRealizada = true;
         setTimeout(() => acenderLuzChamado(), 2000);
@@ -340,6 +365,14 @@ function acenderLuzChamado() {
     const luz = document.getElementById('luz-telefone');
     if (luz) luz.classList.add('ativa');
     montarPainelChamadoAtivo();
+
+    // Inicia o toque em loop do Den Den Mushi junto com a luz piscando
+    try {
+        audioDen1.currentTime = 0;
+        audioDen1.play().catch(() => {
+            console.log("Áudio bloqueado pelo navegador até o primeiro clique.");
+        });
+    } catch (e) {}
 }
 
 // =========================================================
@@ -816,10 +849,15 @@ async function iniciarTerminalJogo() {
     errosTotaisNoDia = 0;
     fecharChamados();
 
-    // Apaga a luz pulsante do telefone imediatamente
+    // Apaga a luz pulsante do telefone e para o toque do Den Den Mushi
     const luz = document.getElementById('luz-telefone');
     if (luz) luz.classList.remove('ativa');
     chamadoAtivo = false;
+
+    try {
+        audioDen1.pause();
+        audioDen1.currentTime = 0;
+    } catch(e) {}
 
     // Abre a tela do terminal
     clicarTela();
