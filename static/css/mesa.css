@@ -1022,6 +1022,21 @@ body.teclado-ativo .instrucao-texto:focus {
         overflow-x: hidden !important;
     }
 
+    /* Fonte da linha C:\SEMAE\ATD-07> e do texto digitado proporcionais e elegantes */
+    .linha-input {
+        font-size: 0.82rem !important;
+        padding-top: 8px !important;
+    }
+
+    .prompt-simbolo {
+        font-size: 0.82rem !important;
+        margin-right: 6px !important;
+    }
+
+    .campo-entrada, #ghost-text {
+        font-size: 0.82rem !important;
+    }
+
     /* Telefone/Chamados: Amplo no estilo do Manual (840px), 2 colunas e sem barra na 2ª coluna */
     .chamados-backdrop {
         overflow: auto !important;

@@ -271,6 +271,35 @@
             0%, 100% { opacity: 0.2; }
             50% { opacity: 1; }
         }
+
+        @media (max-width: 768px) {
+        body {
+            display: flex !important;
+            justify-content: center !important;
+            align-items: center !important;
+            min-height: 100vh !important;
+            overflow: auto !important; /* Libera o pan e zoom com o dedo */
+            touch-action: pan-x pan-y pinch-zoom !important;
+            padding: 10px !important;
+            box-sizing: border-box !important;
+        }
+
+        .ranking-container {
+            width: 840px !important; /* Mesma largura sólida do telefone e manual */
+            min-width: 840px !important;
+            transform: scale(0.44) !important; /* Encaixa no visor mantendo o layout de PC */
+            transform-origin: center center !important;
+            margin: auto !important;
+        }
+
+        .tabela-wrapper {
+            overflow-x: hidden !important; /* ELIMINA A BARRA HORIZONTAL DA TABELA */
+        }
+
+        .tabela-ranking {
+            width: 100% !important;
+        }
+    }
     </style>
 </head>
 <body>
