@@ -792,7 +792,7 @@ async function iniciarTerminalJogo() {
     input.disabled = true;
     areaInput.style.opacity = '.3';
 
-    // 1. Régua de 16 '=' no celular e 55 '=' no computador
+    // 1. Régua adaptada: 16 '=' no celular e 55 '=' no computador
     const isMobile = window.innerWidth < 768 || ('ontouchstart' in window);
     const divisoriaCmd = isMobile ? "================" : "=======================================================";
     const tituloTerminal = isMobile ? "TERMINAL SEMAE" : "       TERMINAL OPERACIONAL SEMAE";
@@ -857,7 +857,7 @@ ${divisoriaCmd}`;
     input.disabled = false;
     areaInput.style.opacity = '1';
 
-    // 2. No computador foca na hora; no celular NÃO foca para o teclado virtual não subir na frente
+    // 2. No computador foca na hora; no celular NÃO foca para o teclado não subir na frente
     if (!isMobile) {
         input.focus();
     }

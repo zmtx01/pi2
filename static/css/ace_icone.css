@@ -259,8 +259,16 @@ body.icones-ativos .tag-acessivel {
 
     /* Transforma o [ESC] FECHAR em um X vermelho no topo */
     .btn-fechar-painel {
+        font-size: 0 !important; /* Esconde o texto [ESC] FECHAR */
+        cursor: pointer;
+        padding: 4px;
+        line-height: 1;
+    }
+
+    .btn-fechar-painel::after {
+        content: "✕" !important;
+        font-size: 1.4rem !important;
         color: #ff5f56 !important;
-        font-size: 1.3rem !important;
         font-weight: bold !important;
         font-family: Arial, sans-serif !important;
     }
