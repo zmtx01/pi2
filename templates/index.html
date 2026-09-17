@@ -519,15 +519,14 @@
         btnTurno.className = 'btn-iniciar-turno';
         btnTurno.tabIndex = 1;
 
-        // SE FOR CELULAR: Frase curta para caber perfeito na tela
-        // SE FOR COMPUTADOR: Mantém a frase clássica original intacta
+        
         const isMobile = window.innerWidth < 768 || ('ontouchstart' in window);
         if (isMobile) {
-            btnTurno.setAttribute('data-fala', 'Botão: Clique para iniciar o seu turno...');
-            btnTurno.textContent = '[ Clique para iniciar o seu turno... ]';
+            btnTurno.setAttribute('data-fala', 'Botão: Clique para iniciar');
+            btnTurno.textContent = '[ Clique para iniciar ]';
         } else {
             btnTurno.setAttribute('data-fala', 'Botão: Pressione qualquer tecla ou clique para iniciar o seu turno...');
-            btnTurno.textContent = '[ Pressione qualquer tecla ou clique para iniciar seu turno... ]';
+            btnTurno.textContent = '[ Pressione qualquer tecla ou clique para iniciar o seu turno... ]';
         }
 
         screen2.appendChild(btnTurno);
