@@ -576,6 +576,49 @@ async function mudarPaginaCaderno(direcao) {
     cadernoTravado = false;
 }
 
+// GESTO DE FOLHEAR POR DESLIZE (SWIPE) NO CELULAR
+let touchManualStartX = 0;
+let touchManualStartY = 0;
+
+window.addEventListener('DOMContentLoaded', () => {
+    const caderno = document.getElementById('caderno');
+    if (!caderno) return;
+
+    caderno.addEventListener('touchstart', (e) => {
+        if (e.touches.length === 1) {
+            touchManualStartX = e.touches[0].clientX;
+            touchManualStartY = e.touches[0].clientY;
+        }
+    }, { passive: true });
+
+    caderno.addEventListener('touchend', (e) => {
+        if (e.changedTouches.length === 1) {
+            const touchEndX = e.changedTouches[0].clientX;
+            const touchEndY = e.changedTouches[0].clientY;
+            const deltaX = touchEndX - touchManualStartX;
+            const deltaY = touchEndY - touchManualStartY;
+
+            // Trava: SÓ vira a página se estiver na escala normal (sem zoom ativo)
+            const semZoom = !window.visualViewport || Math.abs(window.visualViewport.scale - 1) < 0.15;
+
+            // Identifica um arraste horizontal nítido (mais de 45px de deslocamento)
+            if (semZoom && Math.abs(deltaX) > 45 && Math.abs(deltaX) > Math.abs(deltaY) * 1.5) {
+                if (deltaX < 0) {
+                    // Deslizou para a esquerda (←): avança para a próxima folha
+                    mudarPaginaCaderno(1);
+                } else {
+                    // Deslizou para a direita (→): volta para a folha anterior
+                    mudarPaginaCaderno(-1);
+                }
+
+                // Se a acessibilidade estiver ligada, narra a nova página
+                if (typeof narrarTituloCaderno === 'function') {
+                    narrarTituloCaderno();
+                }
+            }
+        }
+    }, { passive: true });
+});
 
 // 6. MOTOR DO TERMINAL, REVER, REFAZER E COMANDO ACL_ON
 function normalizarTexto(txt) {
