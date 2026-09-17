@@ -243,6 +243,15 @@ body.icones-ativos .tag-acessivel {
         display: none !important;
     }
 
+     /* No celular: esconde o emoji de texto e usa a sua imagem ace.png */
+    .btn-icone-grande {
+        font-size: 0 !important; /* Oculta o caractere de texto no celular */
+        background-image: url('../img/ace.png') !important; /* Carrega a sua arte */
+        background-size: 40px 40px !important; /* Tamanho proporcional na caixinha */
+        background-repeat: no-repeat !important;
+        background-position: center !important;
+    }
+    
     /* Painel abre exatamente centralizado sobre o formulário */
     .painel-gaveta-opcoes {
         position: fixed !important;
