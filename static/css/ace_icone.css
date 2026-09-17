@@ -225,3 +225,19 @@ body.icones-ativos .tag-acessivel {
     border-radius: 2px;
     margin-left: 6px;
 }
+
+@media (max-width: 768px) {
+    .widget-acessibilidade {
+        top: 15px !important;
+        left: 50% !important;
+        transform: translateX(-50%) !important;
+    }
+
+    .painel-gaveta-opcoes {
+        width: 92% !important;
+        max-width: 92% !important;
+        height: auto !important;
+        min-height: unset !important;
+        padding: 16px 18px !important;
+    }
+}

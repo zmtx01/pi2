@@ -159,6 +159,33 @@
             font-size: 4.3rem;
             outline: none;
         }
+
+        /* AJUSTE DO TÍTULO NO CELULAR (NÃO SOBREPÕE O FORMULÁRIO) */
+        @media (max-width: 768px) {
+            body {
+                padding: 15px;
+                align-items: flex-start;
+                padding-top: 100px;
+                height: auto;
+                min-height: 100vh;
+                overflow-y: auto;
+            }
+            .header-externo {
+                top: 15px;
+            }
+            .titulo-jogo {
+                font-size: 1.8rem;
+                margin: 8px 0;
+                line-height: 1.2;
+            }
+            .terminal-box {
+                width: 100%;
+                max-width: 100%;
+                padding: 20px 15px;
+                min-height: auto;
+            }
+        }
+
     </style>
 </head>
 <body>
@@ -362,13 +389,17 @@
 
             rodarBarraAscii();
 
-            await typeText(divSup, "==================================================================================================", 5);
+             const linhaDivisoria = window.innerWidth < 768 
+                ? "============================" 
+                : "==================================================================================================";
+
+            await typeText(divSup, linhaDivisoria, 5);
             if (!skipTyping) await sleep(150);
 
             await typeText(tituloTexto, "DIÁRIO DE UM ESTAGIÁRIO", 20);
             if (!skipTyping) await sleep(150);
 
-            await typeText(divInf, "==================================================================================================", 5);
+            await typeText(divInf, linhaDivisoria, 5);
             if (!skipTyping) await sleep(150);
 
             const terminal = document.getElementById('terminal');

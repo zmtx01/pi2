@@ -942,6 +942,53 @@ body.teclado-ativo .instrucao-texto:focus {
     background-color: rgba(255, 159, 28, 0.2) !important;
 }
 
+@media (max-width: 768px) {
+    body {
+        overflow: auto !important; /* Libera o arraste livre com o dedo */
+        touch-action: pan-x pan-y pinch-zoom !important; /* Libera pinça de zoom */
+        padding: 10px;
+        align-items: flex-start;
+        height: auto;
+        min-height: 100vh;
+    }
+
+    .sala-container {
+        margin: 20px auto 80px auto;
+    }
+
+    /* Texto da base fluido: quebra linha e não corta à esquerda */
+    .instrucao-texto {
+        bottom: -55px;
+        white-space: normal !important;
+        width: 90vw !important;
+        max-width: 90vw !important;
+        font-size: 1rem;
+        line-height: 1.4;
+    }
+
+    /* Modais com formato equilibrado no visor vertical */
+    .cmd-janela,
+    .navegador-container {
+        width: 96vw;
+        min-width: 330px;
+        max-height: 85vh;
+        transform: none !important;
+    }
+
+    .cmd-corpo,
+    .conteudo-web {
+        height: auto;
+        max-height: 60vh;
+    }
+
+    /* Escala do manual para caber melhor na tela vertical */
+    .manual-wrapper-posicao {
+        right: 2%;
+        top: 6%;
+        transform: scale(0.42) !important;
+        transform-origin: top center;
+    }
+}
 
 /* 8. RESPONSIVIDADE */
 @media (max-height: 1100px) {
