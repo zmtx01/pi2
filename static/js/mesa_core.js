@@ -44,6 +44,54 @@ audioDen1.volume = 0.45;
 const audioDen2 = new Audio(_caminhoAudio + 'den2.mp3');
 audioDen2.volume = 0.55;
 
+// SINTETIZADOR PROCEDURAL DE EFEITOS DO TERMINAL (WEB AUDIO API)
+const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+let audioCtxTerminal = null;
+
+function obterAudioTerminal() {
+    if (!audioCtxTerminal) audioCtxTerminal = new AudioContextClass();
+    if (audioCtxTerminal.state === "suspended") audioCtxTerminal.resume();
+    return audioCtxTerminal;
+}
+
+function tomTerminal(freq, duracao, tipo = "sine", volume = 0.15, atraso = 0) {
+    try {
+        const ac = obterAudioTerminal();
+        const agora = ac.currentTime + atraso;
+        const osc = ac.createOscillator();
+        const ganho = ac.createGain();
+
+        osc.type = tipo;
+        osc.frequency.setValueAtTime(freq, agora);
+
+        ganho.gain.setValueAtTime(0.0001, agora);
+        ganho.gain.exponentialRampToValueAtTime(volume, agora + 0.005);
+        ganho.gain.exponentialRampToValueAtTime(0.0001, agora + duracao);
+
+        osc.connect(ganho);
+        ganho.connect(ac.destination);
+
+        osc.start(agora);
+        osc.stop(agora + duracao + 0.02);
+    } catch (e) {}
+}
+
+// 03 — Terminal Crítico (Grave e eletrônico para erro de comando)
+function tocarErroTerminal() {
+    tomTerminal(190, 0.35, "sawtooth", 0.12);
+    tomTerminal(145, 0.35, "sawtooth", 0.10);
+    tomTerminal(105, 0.35, "sawtooth", 0.08);
+    tomTerminal(70, 0.20, "square", 0.06, 0.22);
+}
+
+// 02 — Sucesso Futurista (Sequência digital ascendente para acerto de código)
+function tocarSucessoTerminal() {
+    tomTerminal(440, 0.08, "sine", 0.10);
+    tomTerminal(660, 0.08, "sine", 0.10, 0.08);
+    tomTerminal(990, 0.12, "sine", 0.12, 0.16);
+    tomTerminal(1320, 0.20, "sine", 0.09, 0.28);
+}
+
 function carregarCartuchoNativoDia1(nome) {
     const nomeUpper = (nome || 'ESTAGIÁRIO').toUpperCase();
     return [
@@ -1185,6 +1233,7 @@ window.addEventListener('DOMContentLoaded', () => {
             }
 
             if (aceitarComando) {
+                tocarSucessoTerminal(); // TOCA O SUCESSO FUTURISTA AO ACERTAR!
                 let textoSucesso = f.sucesso;
 
                 if (faseAtual === 11) {
@@ -1225,8 +1274,10 @@ window.addEventListener('DOMContentLoaded', () => {
 
                 avancarFaseJogo();
             } else {
+                tocarErroTerminal();
                 errosFase++;
                 errosTotaisNoDia++;
+                
 
                 const divErro = document.createElement('div');
                 divErro.style.marginTop = "15px";
