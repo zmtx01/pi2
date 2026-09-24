@@ -325,7 +325,7 @@ function clicarTela() {
     const tituloTerminal = isMobile ? "TERMINAL SEMAE" : "       TERMINAL OPERACIONAL SEMAE";
 
     if (!jogoAtivo && !modoMenuAcl && historico) {
-        if (!historico.innerHTML.includes("Microsoft Windows")) {
+        if (!historico.innerHTML.includes("aviso-azul-acl")) {
             historico.innerHTML = `
 <div class="aviso-azul-acl" style="color: #38bdf8; margin-bottom: 12px; font-weight: bold;">Para ativar a acessibilidade utilize o comando ACL_ON no terminal.</div>
 Microsoft Windows [versão 10.0.19045]
