@@ -12,6 +12,8 @@ import jwt
 from dotenv import load_dotenv
 from flask import Flask, jsonify, request, render_template, redirect, url_for, make_response
 from flask_cors import CORS
+import urllib.request
+
 
 load_dotenv()
 
@@ -116,6 +118,44 @@ def keep_alive():
             cur.close()
         if conn:
             conn.close()
+
+@app.route('/api/despertador', methods=['GET'])
+def despertador():
+    # Lista com os dois projetos do Render que precisam ser acordados
+    render_sites = [
+        "https://jogo-pi2.onrender.com/api/keep-alive",
+        "https://projeto-educa-zmtx.onrender.com/api/keep-alive"
+    ]
+
+    for site in render_sites:
+        try:
+            # Enviamos a requisição com timeout curto (3 seg)
+            # O objetivo é apenas 'cutucar' o Render para começar o boot
+            req = urllib.request.Request(site, headers={'User-Agent': 'Despertador-Vercel'})
+            urllib.request.urlopen(req, timeout=3)
+        except Exception:
+            # Ignora timeout; o Render já recebeu o sinal e começou a ligar no fundo
+            pass
+
+    # Aproveita para dar uma consulta no Supabase
+    db_status = "error"
+    conn = get_db_connection()
+    if conn:
+        try:
+            cur = conn.cursor()
+            cur.execute("SELECT id FROM users LIMIT 1;")
+            cur.fetchone()
+            cur.close()
+            conn.close()
+            db_status = "connected"
+        except Exception:
+            if conn: conn.close()
+
+    return jsonify({
+        "status": "ok",
+        "message": "Pontapé inicial enviado para os 2 sites no Render e Supabase!",
+        "database": db_status
+    }), 200
 
 @app.route('/')
 def index():
