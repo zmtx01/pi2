@@ -6,6 +6,7 @@
 import os
 from datetime import datetime, timedelta, UTC
 import psycopg2
+import psycopg2.extras
 import bcrypt
 import jwt
 from dotenv import load_dotenv
@@ -22,7 +23,7 @@ DB_HOST = os.getenv("DB_HOST", "localhost")
 DB_NAME = os.getenv("DB_NAME", "postgres")
 DB_USER = os.getenv("DB_USER", "postgres")
 DB_PASSWORD = os.getenv("DB_PASSWORD")
-DB_PORT = os.getenv("DB_PORT", 5432) # Adiciona leitura de porta
+DB_PORT = os.getenv("DB_PORT", 5432)
 SECRET_KEY = os.getenv("SECRET_KEY")
 
 if not SECRET_KEY:
@@ -40,7 +41,8 @@ def get_db_connection():
             user=DB_USER,
             password=DB_PASSWORD,
             port=DB_PORT,
-            sslmode='require'  # Obrigatório para estabilidade no Supabase
+            sslmode='require',
+            connect_timeout=10 # Timeout para não travar a aplicação se o banco estiver fora
         )
         return conn
     except psycopg2.Error as e:
@@ -73,25 +75,47 @@ def validate_admin_token():
 
 
 # 3. ROTAS DO FRONTEND (PÁGINAS)
-# Keep-Alive que acorda o Render e executa consulta para manter o Supabase ativo
+
+# =========================================================================
+# KEEP-ALIVE CORRIGIDO: SEM FALSOS POSITIVOS E COM CONSULTA A TABELA REAL
+# =========================================================================
 @app.route('/api/keep-alive', methods=['GET'])
 def keep_alive():
     conn = get_db_connection()
-    if conn:
-        try:
-            cur = conn.cursor()
-            cur.execute("SELECT 1;")
+    if not conn:
+        # Se não conectou, RETORNA ERRO 503.
+        # Assim o monitor externo saberá que o banco está inacessível.
+        return jsonify({
+            "status": "error",
+            "database": "disconnected",
+            "message": "Falha na conexão com o banco de dados."
+        }), 503
+
+    cur = None
+    try:
+        cur = conn.cursor()
+        # Consulta em tabela real: força leitura em disco/cache do Supabase
+        cur.execute("SELECT id FROM users LIMIT 1;")
+        cur.fetchone()
+        
+        return jsonify({
+            "status": "healthy",
+            "database": "connected",
+            "timestamp": datetime.now(UTC).isoformat(),
+            "message": "Render e Supabase mantidos ativos com sucesso!"
+        }), 200
+    except Exception as e:
+        return jsonify({
+            "status": "error",
+            "database": "query_failed",
+            "error": str(e)
+        }), 500
+    finally:
+        # Garante que cursor e conexão fecham SEMPRE para não esgotar as conexões do Supabase
+        if cur:
             cur.close()
+        if conn:
             conn.close()
-            return jsonify({
-                "status": "healthy",
-                "database": "connected",
-                "message": "Render e Supabase mantidos ativos com sucesso!"
-            }), 200
-        except Exception as e:
-            if conn: conn.close()
-            return jsonify({"status": "warning", "database_error": str(e)}), 500
-    return jsonify({"status": "healthy", "database": "disconnected"}), 200
 
 @app.route('/')
 def index():
@@ -136,7 +160,6 @@ def semae_mesa_page():
         return redirect(url_for('login_page'))
     return render_template('templates/mesa.html')
 
-# Redirecionamento de segurança para quem acessar a rota antiga do Dia 1
 @app.route('/pi2/dia1')
 def semae_dia1_page():
     return redirect(url_for('semae_mesa_page'))
